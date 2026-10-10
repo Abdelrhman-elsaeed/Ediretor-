@@ -1,0 +1,39 @@
+{
+  "name": "ediretor-phase-00",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "fixtures": "tsx experiments/render-feasibility/scripts/fixtures.ts",
+    "preview": "vite --config experiments/render-feasibility/vite.config.ts",
+    "studio": "remotion studio experiments/render-feasibility/src/index.ts --public-dir experiments/render-feasibility/public --port 3101",
+    "render": "tsx experiments/render-feasibility/scripts/render.ts",
+    "validate": "tsx experiments/render-feasibility/scripts/validate.ts"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.518",
+    "@remotion/cli": "4.0.518",
+    "@remotion/player": "4.0.518",
+    "@remotion/renderer": "4.0.518",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "remotion": "4.0.518",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.17",
+    "@types/react": "19.1.0",
+    "@types/react-dom": "19.1.0",
+    "fast-check": "3.23.2",
+    "playwright": "1.62.1",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}

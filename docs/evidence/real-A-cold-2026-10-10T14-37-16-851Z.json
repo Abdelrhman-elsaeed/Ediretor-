@@ -1,0 +1,38 @@
+{
+  "runId": "real-A-cold-2026-10-10T14-37-16-851Z",
+  "fixture": "real",
+  "candidate": "A",
+  "cache": "cold",
+  "cacheMeaning": "application bundle/graphics cache only; OS cache uncontrolled",
+  "deadlineSeconds": 600,
+  "status": "rendered_unvalidated",
+  "exitCode": 0,
+  "wallSeconds": 185.066585,
+  "outputSeconds": 12,
+  "completedRtf": 15.422215416666667,
+  "elapsedOverRequestedDuration": 15.422215416666667,
+  "peakTreeWorkingSetBytes": 2576805888,
+  "peakRunDiskBytes": 23537710,
+  "samples": 83,
+  "samplingSeconds": 2,
+  "monitorError": "",
+  "progress": {
+    "stage": "rendered",
+    "totalFrames": 360
+  },
+  "profile": {
+    "width": 1920,
+    "height": 1080,
+    "fps": {
+      "num": 30,
+      "den": 1
+    },
+    "codec": "libx264",
+    "preset": "veryfast",
+    "crf": 18,
+    "pixelFormat": "yuv420p",
+    "audio": "aac 192k 48000 stereo",
+    "hardwareAcceleration": "disabled; software encode and decode"
+  },
+  "limits": "8GiB sampled tree working set; 6GiB run scratch; deadline is censored failure, never a full-workload pass"
+}

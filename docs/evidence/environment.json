@@ -1,0 +1,66 @@
+﻿{
+    "capturedUtc":  "2026-10-10T14:41:58.7970526Z",
+    "cpu":  {
+                "Name":  "Intel(R) Core(TM) i7-4910MQ CPU @ 2.90GHz",
+                "NumberOfCores":  4,
+                "NumberOfLogicalProcessors":  8
+            },
+    "gpu":  [
+                {
+                    "Name":  "VirtualMonitor Device",
+                    "DriverVersion":  "10.10.30.904",
+                    "AdapterRAM":  null
+                },
+                {
+                    "Name":  "Intel(R) HD Graphics 4600",
+                    "DriverVersion":  "20.19.15.5063",
+                    "AdapterRAM":  1073741824
+                },
+                {
+                    "Name":  "Microsoft Basic Display Adapter",
+                    "DriverVersion":  "10.0.19041.3636",
+                    "AdapterRAM":  null
+                }
+            ],
+    "os":  {
+               "Caption":  "Microsoft Windows 10 Pro",
+               "Version":  "10.0.19045",
+               "TotalVisibleMemorySize":  16680108,
+               "FreePhysicalMemory":  5149008
+           },
+    "disks":  [
+                  {
+                      "Model":  "HGST HTS725050A7E630",
+                      "MediaType":  "Fixed hard disk media",
+                      "Size":  500105249280
+                  },
+                  {
+                      "Model":  "LITEONIT LMH-256V2M-41 MSATA 256GB SED",
+                      "MediaType":  "Fixed hard disk media",
+                      "Size":  256052966400
+                  }
+              ],
+    "volumes":  [
+                    {
+                        "DriveLetter":  "C",
+                        "Size":  255402758144,
+                        "SizeRemaining":  23495008256
+                    },
+                    {
+                        "DriveLetter":  "D",
+                        "Size":  500104687616,
+                        "SizeRemaining":  53875548160
+                    },
+                    {
+                        "DriveLetter":  null,
+                        "Size":  532672512,
+                        "SizeRemaining":  88129536
+                    }
+                ],
+    "node":  "v24.16.0",
+    "npm":  "11.13.0",
+    "ffmpeg":  "ffmpeg version N-122319-gf6a95c7eb7-20251231 Copyright (c) 2000-2025 the FFmpeg developers",
+    "ffprobe":  "ffprobe version N-122319-gf6a95c7eb7-20251231 Copyright (c) 2007-2025 the FFmpeg developers",
+    "referenceTimezone":  "Africa/Cairo",
+    "hardwareAcceleration":  "Software libx264 and software Chromium swangle explicitly selected. No claim of GPU acceleration."
+}

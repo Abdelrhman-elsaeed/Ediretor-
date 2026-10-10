@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ediretor TypeScript Architect"
+  short_description: "Layered TypeScript rules for the Ediretor video editor"
+  default_prompt: "Use $ediretor-typescript-architect to implement the current Ediretor phase with verified legacy reuse and clean module boundaries."

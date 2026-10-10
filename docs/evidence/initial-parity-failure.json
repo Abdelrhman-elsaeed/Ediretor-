@@ -1,0 +1,107 @@
+{
+  "runId": "real-A-cold-2026-10-10T14-37-16-851Z",
+  "metadataPass": false,
+  "durationErrorSeconds": 0.0533330000000003,
+  "frameCount": 360,
+  "timingMaxErrorSeconds": 3.333333342681044e-7,
+  "timingPass": true,
+  "fullDecodePass": true,
+  "parity": [
+    {
+      "frame": 0,
+      "meanAbsoluteError": 1.360439814814815,
+      "psnr": 42.498144910446676,
+      "pass": true
+    },
+    {
+      "frame": 29,
+      "meanAbsoluteError": 2.3820576131687243,
+      "psnr": 37.43008082130321,
+      "pass": true
+    },
+    {
+      "frame": 30,
+      "meanAbsoluteError": 1.4196784979423869,
+      "psnr": 42.328175951414025,
+      "pass": true
+    },
+    {
+      "frame": 60,
+      "meanAbsoluteError": 5.261067386831276,
+      "psnr": 20.5562330490583,
+      "pass": false
+    },
+    {
+      "frame": 89,
+      "meanAbsoluteError": 5.589022633744856,
+      "psnr": 20.486284235844636,
+      "pass": false
+    },
+    {
+      "frame": 90,
+      "meanAbsoluteError": 2.9038451646090535,
+      "psnr": 26.257009796232186,
+      "pass": false
+    },
+    {
+      "frame": 179,
+      "meanAbsoluteError": 2.117502572016461,
+      "psnr": 35.54811281817266,
+      "pass": true
+    },
+    {
+      "frame": 180,
+      "meanAbsoluteError": 2.2715174897119343,
+      "psnr": 28.113496297361284,
+      "pass": true
+    },
+    {
+      "frame": 269,
+      "meanAbsoluteError": 1.5043852880658437,
+      "psnr": 37.63950411599689,
+      "pass": true
+    },
+    {
+      "frame": 270,
+      "meanAbsoluteError": 1.1489223251028806,
+      "psnr": 42.81647769464093,
+      "pass": true
+    },
+    {
+      "frame": 329,
+      "meanAbsoluteError": 5.196152263374485,
+      "psnr": 20.476693126363767,
+      "pass": false
+    },
+    {
+      "frame": 359,
+      "meanAbsoluteError": 1.724894547325103,
+      "psnr": 39.14870128238994,
+      "pass": true
+    }
+  ],
+  "pageErrors": [],
+  "sync": [
+    {
+      "windowStartMs": 500,
+      "offsetMs": 43,
+      "envelopeMeanSquareError": 0.000039139026925598814,
+      "pass": false
+    },
+    {
+      "windowStartMs": 6526,
+      "offsetMs": 43,
+      "envelopeMeanSquareError": 0.00003925168931966013,
+      "pass": false
+    },
+    {
+      "windowStartMs": 10553,
+      "offsetMs": 43,
+      "envelopeMeanSquareError": 0.000039109930642814956,
+      "pass": false
+    }
+  ],
+  "arabicVisualReview": "manual inspection required; screenshots retained",
+  "limitations": "Short fixtures only; marker audio is synthetic; Arabic text is authored overlay, not speech transcription",
+  "pass": false
+}

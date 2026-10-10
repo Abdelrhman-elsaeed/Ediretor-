@@ -1,0 +1,109 @@
+{
+  "createdAt": "2026-10-10T14:36:40.306Z",
+  "metadata": [
+    {
+      "name": "flower.mp4",
+      "sha256": "0cd83d944a6ca7822b4a8306cecc60a36e859b041f6702c6a1ad9ead78924451",
+      "probe": {
+        "streams": [
+          {
+            "codec_type": "video",
+            "codec_name": "h264",
+            "width": 960,
+            "height": 540,
+            "r_frame_rate": "30000/1001",
+            "avg_frame_rate": "30000/1001",
+            "time_base": "1/30000",
+            "start_time": "0.000000",
+            "duration": "5.005000",
+            "nb_frames": "150"
+          },
+          {
+            "codec_type": "audio",
+            "codec_name": "aac",
+            "r_frame_rate": "0/0",
+            "avg_frame_rate": "0/0",
+            "time_base": "1/48000",
+            "start_time": "0.000000",
+            "duration": "5.055000",
+            "nb_frames": "237",
+            "sample_rate": "48000"
+          }
+        ],
+        "format": {
+          "duration": "5.055000"
+        }
+      }
+    },
+    {
+      "name": "real.mp4",
+      "sha256": "8b39d1f85896f4d16fcaa6d4fe49c25c1bddcf0c693e2c4a3767cb0198458ffe",
+      "probe": {
+        "streams": [
+          {
+            "codec_type": "video",
+            "codec_name": "h264",
+            "width": 1920,
+            "height": 1080,
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "time_base": "1/15360",
+            "start_time": "0.000000",
+            "duration": "16.000000",
+            "nb_frames": "480"
+          },
+          {
+            "codec_type": "audio",
+            "codec_name": "aac",
+            "r_frame_rate": "0/0",
+            "avg_frame_rate": "0/0",
+            "time_base": "1/48000",
+            "start_time": "0.000000",
+            "duration": "16.000000",
+            "nb_frames": "751",
+            "sample_rate": "48000"
+          }
+        ],
+        "format": {
+          "duration": "16.000000"
+        }
+      }
+    },
+    {
+      "name": "markers.mp4",
+      "sha256": "1c874bf5a06aca2232480414db097c1606802b24f7fc2aa88b0d9779e0e8b488",
+      "probe": {
+        "streams": [
+          {
+            "codec_type": "video",
+            "codec_name": "h264",
+            "width": 1920,
+            "height": 1080,
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "time_base": "1/15360",
+            "start_time": "0.000000",
+            "duration": "16.000000",
+            "nb_frames": "480"
+          },
+          {
+            "codec_type": "audio",
+            "codec_name": "aac",
+            "r_frame_rate": "0/0",
+            "avg_frame_rate": "0/0",
+            "time_base": "1/48000",
+            "start_time": "0.000000",
+            "duration": "16.000000",
+            "nb_frames": "751",
+            "sample_rate": "48000"
+          }
+        ],
+        "format": {
+          "duration": "16.000000"
+        }
+      }
+    }
+  ],
+  "realSource": "MDN CC0 flower.mp4; looped footage + synthetic marker audio, not Arabic speech",
+  "longWorkload": "Synthetic repeated 16s source occurrences; complete 60min/4h sequences. Q05 has 500 tail trims and 100 graphic placements. Q06 has two 2s graphics."
+}
