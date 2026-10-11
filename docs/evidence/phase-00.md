@@ -2,11 +2,11 @@
 
 ## النتيجة الحالية
 
-**No-go لبدء Phase 01 حاليًا.** أصبحت contracts، harness، الاختبارات، والتجربة القابلة لإعادة التشغيل موجودة. لكن Q05/Q06 لم تكتمل بعد، وQ10 لم يُقَس، ونتيجة B لم تمر validation parity بعد. لذلك لا يوجد دليل يبرر إعلان renderer إنتاجي أو دعم 60 دقيقة/4 ساعات/4K.
+**تحديث اتجاه العمل — 2026-10-11:** أوقف المستخدم جولة benchmarking وأجّل renderer qualification، وسمح بتنفيذ Phase 01 دون انتظارها. نتيجة الجودة تبقى NO-GO/غير مكتملة؛ لم تُحوّل إلى نجاح. نجح التحقق القصير لـA وB بعد إصلاح cache الجرافيك، لكن Q05/Q06 لم تكتمل وQ10 parity فشلت. التفاصيل في [متابعة 11 أكتوبر](phase-00-followup-2026-10-11.md). لا نعلن دعم 60 دقيقة/4 ساعات/مصادر 4K. الجداول القديمة أدناه تاريخية وتحفظ أدلة الفشل السابقة.
 
 ## البيئة
 
-المواصفات التفصيلية في [environment.json](environment.json): Windows 10 Pro 10.0.19045، Intel i7-4910MQ (4 cores/8 logical)، RAM مرئية 15.9GiB، Intel HD Graphics 4600، قرص HGST HDD 500GB وLITEON mSATA 256GB. المساحة الحرة وقت الفحص كانت نحو 15.3GiB على D. Node v24.16.0، npm 11.13.0، FFmpeg/FFprobe N-122319-gf6a95c7eb7-20251231. Remotion/React 4.0.518/19.1.0. الجهاز لا يملك GPU encoder مثبتًا تم تفعيله هنا؛ التجربة تستخدم software libx264، وChromium swangle/disable GPU.
+المواصفات التفصيلية في [environment.json](environment.json): Windows 10 Pro 10.0.19045، Intel i7-4910MQ (4 cores/8 logical)، RAM مرئية 15.9GiB، Intel HD Graphics 4600، قرص HGST HDD 500GB وLITEON mSATA 256GB. ملف البيئة يسجل 53,875,548,160 bytes حرة (50.18GiB) على D؛ رقم 15.3GiB المذكور سابقًا في النص كان غير مطابق للـJSON. Node v24.16.0، npm 11.13.0، FFmpeg/FFprobe N-122319-gf6a95c7eb7-20251231. Remotion/React 4.0.518/19.1.0. الجهاز لا يملك GPU encoder مثبتًا تم تفعيله هنا؛ التجربة تستخدم software libx264، وChromium swangle/disable GPU.
 
 ## fixtures والعقد
 
@@ -36,15 +36,44 @@ npm test
 | B cold مع graphics cache | 12s | 60.9s | 5.08 | 1.94GB | 92.5MB | metadata/timing/audio pass؛ late graphic boundary فشل parity (MAE 26.37) |
 | B warm مع graphics cache | 12s | 17.4s | 1.45 | 0.92GB | 9.7MB | rendered؛ لم يمر validation |
 
-آخر A قصير تحقق من: decode كامل، 360 frames، Arabic/English frame parity في 12 نقطة (MAE/PSNR pass بعد تصحيح direction)، audio marker offsets = 0ms في البداية/الوسط/النهاية. `validate.ts` يقفل نفسه على short fixtures عمدًا؛ التقرير الكامل في `artifacts/real-A-cold-2026-10-10T14-50-17-338Z/`.
+أُعيد تشغيل `npm.cmd run validate -- artifacts/real-A-cold-2026-10-10T14-50-17-338Z` بعد clock filter وtrack timescale الحاليين. النتيجة: **metadataPass=true، durationError=0، avg frame-rate=30/1، 360/360 frames، timingMaxError≈0.33µs، full decode، parity 12/12، audio offsets 0ms، pass=true**. `validate.ts` يقفل نفسه على short fixtures عمدًا؛ التقرير القابل للتتبع في `docs/evidence/real-A-cold-2026-10-10T14-50-17-338Z-validation.json`.
 
-بقي اختلاف تقني: FFmpeg يكتب بعد mux `duration=12.000312` و`avg_frame_rate=1152000/38401` رغم 360 frame وCFR samples؛ `setts` مع track timescale حسّن timestamps إلى 12.000000 في تجربة مستقلة لكنه لم يُعَد تشغيل validation النهائية بعد آخر تعديل. لذلك نسجل parity كـ**مرشح قوي، لا gate مكتمل**.
+هذا يحسم CFR/container للعينة القصيرة A فقط. لا يثبت Q05/Q06 أو 4K مكتملة، ولا يثبت قرار renderer الإنتاجي.
 
 ## A مقابل B
 
-B أسرع في العينة القصيرة (~1.7× باردًا، ~6.6× دافئًا) وذاكرته أقل (~25% باردًا، ~60% دافئًا)، لكنه يستهلك scratch أكبر في cold (~5×) ويضيف segments/concat وalpha scene artifacts. B فشل parity في late graphic boundary رغم نجاح metadata/timing/audio؛ هذا يمنع اعتماده. هذه نتيجة engineering signal فقط: لا تصلح لاختيار نهائي قبل Q05/Q06 وإصلاح/إعادة تحقق B. A أبسط دلاليًا لأن Player/export يشتركان composition؛ B يحتاج parity لكل حدود clip/layout/scene والصوت.
+المقارنة التاريخية أعلاه أظهرت B أسرع لكنها استخدمت cache معيبًا، لذلك لا تُستخدم نسبها لاختيار renderer. بعد إصلاح cache نجح B القصير في parity وmetadata/audio؛ القياسات الجديدة مسجلة في متابعة 11 أكتوبر. A أبسط دلاليًا لأن Player/export يشتركان composition؛ B يحتاج parity لكل حدود clip/layout/scene والصوت، وإكمال Q05/Q06 يبقى مطلوبًا لاختيار نهائي.
 
-لم نبدأ Q05/Q06 كاملين داخل هذه الجولة لأنهما workload حقيقيان قد يستغرقان ساعات على هذا الجهاز. هذا **تأجيل بقياس معلن**، وليس تصغيرًا صامتًا. أوامر التشغيل الأصلية محفوظة في [harness README](../../experiments/render-feasibility/README.md). `benchmark.ps1` يمرر الأحمال كاملة، والمهلة تُسجل فشلًا censored. لا توجد نتيجة مكتملة Q05/Q06/Q10 حتى الآن.
+### تشخيص B — 2026-10-11
+
+فشل frame 329 في العينة القديمة بـMAE=26.37 وPSNR=14.83. فرضية seek الأولى لم تثبت: المحاولتان `real-B-cold-2026-10-11T04-12-54-438Z` و`real-B-warm-2026-10-11T04-16-08-373Z` بقيتا فاشلتين، والثانية أضافت فشلًا في نقاط أخرى. أُعيدت تغييرات seek/frame count إلى الأصل وحُفظت تقارير التجربتين.
+
+السبب المثبت بفحص cache: ملف ProRes «الجرافيك» كان يحتوي الفيديو كاملًا مع alpha معتمة؛ `renderMedia.inputProps` لا يغير `composition.props` المحسوبة من `selectComposition`. إعادة استعمال أول مشهد جرافيك كانت تغطي تخطيط inset المتأخر بفيديو full-frame أقدم. الإصلاح يختار composition مستقلة بـ`graphicsOnly:true`، ويستخدم cache version 2 لمنع إعادة استعمال الملفات القديمة، ويتحقق من شفافية الركن غير المرسوم في كل إطار قبل نشر cache. تفاصيل API تؤكدها [وثائق Remotion](https://www.remotion.dev/docs/4-0-migration).
+
+التحقق بعد الإصلاح: `real-B-cold-2026-10-11T04-21-54-888Z` نجح في 12/12 نقاط دون frame tolerance، وفي metadata/full decode/audio. Frame 329: MAE=1.964 وPSNR=38.480؛ wall=31.872s، RTF=2.656، peak tree WS=1,578,127,360 bytes، peak run disk=20,245,620 bytes. هذا نجاح عينة قصيرة فقط.
+
+في الجولة الأصلية 2026-10-10 لم تُشغّل Q05/Q06/Q10. في المتابعة شُغلت snapshots الكاملة بمهل صريحة؛ `deadline_exceeded` لا تعني اكتمال workload. أوامر التشغيل والنتائج الجديدة في متابعة 11 أكتوبر و[harness README](../../experiments/render-feasibility/README.md).
+
+## قياس workloads في 2026-10-11
+
+شُغّل الأمر الموجود في الـharness كما هو:
+
+```powershell
+powershell -NoProfile -File experiments/render-feasibility/scripts/benchmark.ps1 -DeadlineSeconds 120
+```
+
+اكتملت محاولات A الباردة والدافئة لـQ05 وQ06 وQ10 من حيث تسجيل التقرير، لكن جميعها censored عند مهلة 120 ثانية؛ لم يُحوَّل أي منها إلى RTF مكتمل. أُوقف التسلسل بعد بدء Q05/B البارد لأن B لديه فشل parity موثق في العينة القصيرة، ولأن تشغيل workloads الطويلة لذلك المرشح لا يضيف دليل قبول قبل إصلاح parity.
+
+| Run | output | wall | rendered frames at deadline | peak tree WS | peak run disk | result |
+|---|---:|---:|---:|---:|---:|---|
+| Q05 A cold | 60 min | 120.39s | 233 / 108000 | 2.09 GiB | 45.7 MiB | deadline_exceeded |
+| Q05 A warm | 60 min | 120.46s | 410 / 108000 | 2.08 GiB | 62.2 MiB | deadline_exceeded |
+| Q06 A cold | 4 h | 120.80s | 303 / 432000 | 2.66 GiB | 108.3 MiB | deadline_exceeded |
+| Q06 A warm | 4 h | 120.61s | 371 / 432000 | 2.63 GiB | 58.4 MiB | deadline_exceeded |
+| Q10 A cold | 12 s / 3840×2160 | 120.55s | 181 / 360 | 2.07 GiB | 55.3 MiB | deadline_exceeded |
+| Q10 A warm | 12 s / 3840×2160 | 120.33s | 251 / 360 | 1.90 GiB | 66.7 MiB | deadline_exceeded |
+
+التقارير الكاملة القابلة للتتبع هي `docs/evidence/Q05-A-cold-2026-10-11T03-52-10-949Z.json`، `Q05-A-warm-2026-10-11T03-54-12-046Z.json`، `Q06-A-cold-2026-10-11T03-56-14-074Z.json`، `Q06-A-warm-2026-10-11T03-58-16-090Z.json`، `Q10-A-cold-2026-10-11T04-00-18-307Z.json`، و`Q10-A-warm-2026-10-11T04-02-19-447Z.json`. هذه النتائج تثبت سلوك الحماية والذاكرة المقاسة خلال أول دقيقتين فقط؛ لا تثبت دعم الساعة أو الأربع ساعات أو اكتمال 4K.
 
 ## القرار والقيود
 

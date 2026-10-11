@@ -5,5 +5,5 @@
     "noUncheckedIndexedAccess": true, "esModuleInterop": true,
     "resolveJsonModule": true, "skipLibCheck": true, "noEmit": true
   },
-  "include": ["packages/**/*.ts", "experiments/**/*.ts", "experiments/**/*.tsx", "vitest.config.ts"]
+  "include": ["packages/**/*.ts", "apps/**/*.ts", "apps/**/*.tsx", "scripts/**/*.ts", "experiments/**/*.ts", "experiments/**/*.tsx", "vitest.config.ts"]
 }

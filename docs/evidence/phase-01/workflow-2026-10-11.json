@@ -1,0 +1,109 @@
+{
+  "startedAt": "2026-10-11T05:30:08.588Z",
+  "artifacts": "D:\\Vibe Coding\\Ediretor ai\\artifacts\\phase-01-2026-10-11T05-30-08-585Z",
+  "data": "D:\\Vibe Coding\\Ediretor ai\\artifacts\\phase-01-2026-10-11T05-30-08-585Z\\data",
+  "results": [
+    "Library loading, empty, connection error and retry states",
+    "Create → streamed import → native probe/hash/proxy → saved editor",
+    "Two frame-aligned splits → middle ripple delete → undo/redo → reload with persisted history",
+    "Preview source seek crosses the removed interval",
+    "Save connection failure → pending recovery after reload → successful retry",
+    "Real pinned export continues after revision changes; output probe/frame count/full decode passed",
+    "Visible source markers and audio pulses checked near beginning/middle/end (≤40 ms)",
+    "Cancel prevents partial publication/download",
+    "Missing original fails enqueue; original restored without altering content",
+    "Worker killed during encoding → expired lease reclaimed → one validated result published",
+    "API + worker restart preserves project, history and published export",
+    "Concurrent revision conflict preserves pending work; recovery download precedes explicit reload",
+    "Missing preview media exposes an actionable editor error",
+    "Corrupt file rejects with UNSUPPORTED_MEDIA; silent video imports and exports successfully",
+    "Keyboard undo/redo/save and visible focus verified under Arabic RTL"
+  ],
+  "outputProbe": {
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "avg_frame_rate": "30/1",
+        "nb_frames": "330"
+      },
+      {
+        "codec_type": "audio",
+        "avg_frame_rate": "0/0",
+        "nb_frames": "517"
+      }
+    ],
+    "format": {
+      "duration": "11.000000"
+    }
+  },
+  "exportJob": {
+    "id": "a7ddc77a-5bc6-4653-8ca9-d9990d0199c6",
+    "projectId": "1351bdde-0f79-43a5-bc20-e619391f4cc2",
+    "kind": "export",
+    "status": "succeeded",
+    "stage": "completed",
+    "progress": 1,
+    "error": null,
+    "result": {
+      "output": "a7ddc77a-5bc6-4653-8ca9-d9990d0199c6-8f0a7533-e678-4669-ad02-aed5de48710a-output",
+      "revisionId": "c84c1690-27c8-4858-8545-97f1ef41e522"
+    },
+    "createdAt": "2026-10-11T05:30:36.536Z"
+  },
+  "markerChecks": [
+    {
+      "sequenceSeconds": 1,
+      "sourceSeconds": 1,
+      "whiteMarkerYAverage": 235,
+      "previewExportLumaDifference": 0
+    },
+    {
+      "sequenceSeconds": 4,
+      "sourceSeconds": 7,
+      "whiteMarkerYAverage": 235,
+      "previewExportLumaDifference": 0.321788
+    },
+    {
+      "sequenceSeconds": 9,
+      "sourceSeconds": 12,
+      "whiteMarkerYAverage": 235,
+      "previewExportLumaDifference": 0
+    }
+  ],
+  "audioMarkers": [
+    {
+      "sequenceSeconds": 1,
+      "pulseOffsetMs": 0.020833333333358794
+    },
+    {
+      "sequenceSeconds": 4,
+      "pulseOffsetMs": 0.02083333333313675
+    },
+    {
+      "sequenceSeconds": 9,
+      "pulseOffsetMs": 0.020833333334024928
+    }
+  ],
+  "workerRecovery": {
+    "id": "38ba76cf-409d-4712-b91f-ed2312b06ba3",
+    "projectId": "1351bdde-0f79-43a5-bc20-e619391f4cc2",
+    "kind": "export",
+    "status": "succeeded",
+    "stage": "completed",
+    "progress": 1,
+    "error": null,
+    "result": {
+      "output": "38ba76cf-409d-4712-b91f-ed2312b06ba3-1f81b142-7928-40fc-acd1-b916d51403fd-output",
+      "revisionId": "cbe3c612-daa1-4da8-b6f9-a612e6e74b20"
+    },
+    "createdAt": "2026-10-11T05:30:48.282Z"
+  },
+  "expectedInjectedNetworkErrors": [
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ],
+  "browserErrors": [],
+  "completedAt": "2026-10-11T05:31:20.675Z"
+}

@@ -6,6 +6,7 @@ import {openBrowser,selectComposition,renderMedia} from '@remotion/renderer';
 import {harness,root,publicDir,loadJson,hash,json,native} from './io';
 import {compile,parseSnapshot} from '../src/contract';
 import {z} from 'zod';
+import {assertGraphicsAlpha} from './graphics-alpha';
 const runDir=z.string().parse(process.argv[2]);const candidate=z.enum(['A','B']).parse(process.argv[3]);const cache=process.argv[4];
 const snapshot=parseSnapshot(await loadJson(resolve(runDir,'snapshot.json')));
 for(const a of snapshot.assets)if(await hash(resolve(publicDir,a.file))!==a.sha256)throw new Error(`ASSET_HASH_MISMATCH:${a.id}`);
@@ -39,16 +40,19 @@ try{
     // Encode AAC once from lossless composition audio. Avoid repeated AAC priming delays.
     await native('ffmpeg',['-hide_banner','-loglevel','error','-nostdin','-y','-i',resolve(runDir,'video.mp4'),'-i',resolve(runDir,'audio.wav'),'-map','0:v:0','-map','1:a:0','-c:v','copy','-bsf:v',clockFilter,'-video_track_timescale',String(snapshot.fps.num),'-c:a','aac','-b:a','192k','-ar','48000','-ac','2','-t',String(Number(snapshot.durationUs)/1e6),'-movflags','+faststart',resolve(runDir,'output.mp4')],600_000);
   }else{
+    const graphicsInputProps={snapshot,graphicsOnly:true};
+    const graphicsComposition=await selectComposition({serveUrl:bundlePath,id:snapshot.fixture,inputProps:graphicsInputProps,puppeteerInstance:browser});
     const plan=compile(snapshot);const graphicsPaths=new Map<string,string>();
     for(const g of plan.graphics){
       // Content key excludes placement, includes all visual dependencies and runtime.
-      const key=createHash('sha256').update(JSON.stringify({compositionHash,text:g.text,image:snapshot.assets.find(a=>a.id===g.imageAssetId),font:snapshot.assets.find(a=>a.kind==='font'),width:snapshot.width,height:snapshot.height,fps:snapshot.fps,frames:g.to-g.from,template:snapshot.templateVersion,runtime:snapshot.rendererVersion})).digest('hex');
+      const key=createHash('sha256').update(JSON.stringify({graphicsCacheVersion:2,compositionHash,text:g.text,image:snapshot.assets.find(a=>a.id===g.imageAssetId),font:snapshot.assets.find(a=>a.kind==='font'),width:snapshot.width,height:snapshot.height,fps:snapshot.fps,frames:g.to-g.from,template:snapshot.templateVersion,runtime:snapshot.rendererVersion})).digest('hex');
       const path=resolve(cacheDir,`${key}.mov`);let ready=true;try{await access(path);}catch{ready=false;}
       // Only the first matching placement needs rendering even in a cold run.
       if(!ready||(cache==='cold'&&![...graphicsPaths.values()].includes(path))){
         await progress({stage:'graphics',graphicId:g.id,frames:g.to-g.from});
         const temporary=resolve(runDir,`${key}.partial.mov`);
-        await renderMedia({...shared,inputProps:{snapshot,graphicsOnly:true},frameRange:[g.from,g.to-1],outputLocation:temporary,codec:'prores',proResProfile:'4444',pixelFormat:'yuva444p10le',imageFormat:'png',muted:true});
+        await renderMedia({...shared,composition:graphicsComposition,inputProps:graphicsInputProps,frameRange:[g.from,g.to-1],outputLocation:temporary,codec:'prores',proResProfile:'4444',pixelFormat:'yuva444p10le',imageFormat:'png',muted:true});
+        await assertGraphicsAlpha(temporary,g.to-g.from);
         const {rename}=await import('node:fs/promises');await rename(temporary,path);
       }
       graphicsPaths.set(g.id,path);

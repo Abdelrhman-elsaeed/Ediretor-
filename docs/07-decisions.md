@@ -1,5 +1,17 @@
 # سجل القرارات والأسئلة
 
+## D10 / ADR-08 — Active implementation direction, 2026-10-11
+
+**Confirmed user decision:** stop the current Phase 00 benchmark round; defer unresolved renderer qualification; cancel Figma. Neither the unfinished quality gate nor a design artifact blocks frontend implementation. Existing measurements remain historical evidence, with Q05/Q06 incomplete and Q10 parity failed. No gate is relabeled as passed.
+
+**Implementation choice within the authorized Phase 01 slice:** React/TypeScript + existing Vite tooling; Node 24 local HTTP adapter; SQLite WAL behind repository ports; native FFmpeg in a separate bounded worker process. SQLite replaces the proposed local PostgreSQL setup for this slice, avoiding an external database install while providing atomic revisions, command receipts, ownership checks, and durable jobs. PostgreSQL remains a possible hosted adapter rather than a second implementation now. `node:sqlite` is available in the inspected Node 24.16.0 environment; Node 24+ is the recorded local runtime requirement.
+
+The browser and worker share a validated composition plan for sequential 1× clips and linked source audio. Export pins the document, asset hashes, `native-cuts-v1` renderer version and `mp4-1080p-30` profile. This cuts-only path does not qualify either Phase 00 graphics candidate. Current export admission is at most 10 minutes / 200 clips / 1080p / 30 fps; these conservative guardrails are not measured long-video support claims. Sources may be silent; missing media and hash changes fail explicitly. Import admits up to 2 GiB, 4 hours, 3840×2160 and 120 fps; broader media/long workloads remain unqualified.
+
+The Arabic shell uses RTL; the timeline axis, numeric timecodes, and source identifiers use LTR. Time advances rightward and Left/Right seek backward/forward in both themes. Video pixels never mirror. Future transcript, simultaneous sources/sync, templates, graphics, and AI stay in their recorded phases. The visual brief is implemented directly in CSS/React, using Noto Sans Arabic with its retained OFL license. Copper/focus/success tokens are adjusted for contrast.
+
+This section supersedes the old active Figma and renderer prerequisites in ADR-02/04/D09 below. Their rationale and observations are preserved as history. See [Phase 01 runtime contracts](../specs/001-project-core/runtime-contract.md) and the [Phase 01 evidence](evidence/phase-01.md).
+
 التاريخ: 2026-10-10. الكلمات: مؤكد = قاله المستخدم؛ مقترح = قرار هندسي قابل للمراجعة؛ بوابة = يحتاج دليل قبل تثبيته.
 
 ## قرارات المنتج
@@ -40,9 +52,9 @@ Phase 00 تقيس صلاحية الوحدات للنقل واختيار renderer
 
 ## ADR-04: renderer
 
-الحالة: بوابة Phase 00؛ لم تُحسم. تجربة قصيرة على الجهاز المرجعي أظهرت A (Remotion composition شامل) 106.5s/12s وB (FFmpeg segments مع graphics cache) 61.2s/12s، مع A peak WS ~2.59GB وB ~1.94GB وB scratch أكبر. A نجح في frame/audio parity بعد إصلاحات الاتجاه والـPCM، لكن container CFR metadata ما زال يحتاج إعادة تحقق. Q05/Q06/Q10 لم تكتمل.
+الحالة: بوابة Phase 00؛ لم تُحسم. تحديث 2026-10-11: A اجتاز إعادة تحقق CFR/container للعينة القصيرة (30/1، 360 frame، 12.000000s). B كان يخزن فيديو كاملًا داخل cache الجرافيك بسبب اختلاف `inputProps` و`composition.props`؛ بعد اختيار composition للجرافيك ورفع cache version نجح في 12/12 نقاط parity والصوت والتوقيت. B cold الجديد: 31.872s/12s، peak tree WS 1.47GiB وrun disk 19.31MiB. أرقام B القديمة تخص cache معيبًا ولا تُستخدم لاختيار الإنتاج. Q05/Q06 شُغلت بمهلة 120s كعينات censored ولم تكتمل؛ نتائج Q10 وحدودها في [متابعة الدليل](evidence/phase-00-followup-2026-10-11.md).
 نثبت اختيارًا واحدًا بنتيجة Q05/Q06 وparity؛ لا ندّعي أن المشاركة في React تضمن أداء ساعات.
-قرار Phase 00 الحالي: لا-go؛ لا نعتمد أي renderer للإصدار قبل Q05/Q06 وB validation كاملة. نستخدم A كمرجع دلالي، ونبقي B مرشحًا مشروطًا بدليل الأداء. قبل اعتماده للإصدار نراجع شروط توزيع dependencies الحالية في Phase 00/09 دون افتراض أنها مجانية لكل استخدام.
+قرار Phase 00 الحالي: لا-go؛ لا نعتمد أي renderer للإصدار قبل قياس Q05/Q06 كاملًا والتحقق من مخرجاتها. نستخدم A كمرجع دلالي، ونبقي B مرشحًا مشروطًا بدليل الأداء. تجاوز فشل parity القصير لا يثبت دعم الفيديو الطويل أو يختار queue/runtime إنتاجية. قبل اعتماده للإصدار نراجع شروط توزيع dependencies الحالية في Phase 00/09 دون افتراض أنها مجانية لكل استخدام.
 
 ## ADR-05: مشاهد مخصصة
 
@@ -61,6 +73,16 @@ Cloudflare/VM/object storage providers لم تُحسم.
 المرجع التشغيلي: [Engineering rules](12-engineering-rules.md). التغطية وسبب كل تعديل: [خريطة القواعد](13-dotnet-rule-mapping.md).
 مهارة المشروع: [.agents/skills/ediretor-typescript-architect/SKILL.md](../.agents/skills/ediretor-typescript-architect/SKILL.md)، مع نسخة مستخدم محلية للتسهيل. النسخة داخل الريبو هي المرجع الذي يُحدّث أولًا؛ مزامنة نسخة المستخدم تتم عند تحديث المهارة.
 لا يغير هذا الطلب مرحلة التنفيذ الحالية، ولا يثبت ORM أو renderer أو يحول المشروع إلى .NET. مهارة .NET الأصلية تبقى دون تعديل.
+
+## D09: Design Foundation وواجهة V2
+
+الحالة: مؤكد من المستخدم كمسار عمل جديد، والتنفيذ في Phase 00D.
+
+القرار: نبني design system وeditor flows وواجهة المنصة الجديدة في Figma، ثم ننفذها في React/TypeScript. لا ننسخ واجهة TextCut الكبيرة؛ نستخدمها للبحث في السلوك والمشكلات فقط. Figma artifact لا يملك ProjectDocument ولا يثبت preview/export parity.
+
+السبب: الواجهة القديمة تجمع مسؤوليات كثيرة ولا تمثل snapshot الموحدة ومسارات الكاميرا/الشاشة والجرافيك كما يحتاج V2. تصميم الواجهة قبل Phase 01 يقلل قرارات UI العشوائية، مع إبقاء العقود domain/application هي المرجع الوظيفي.
+
+الأثر: يضاف Phase 00D قبل 01، وتشمل design tokens، RTL/LTR، editor shell، timeline، preview، inspector، import/export، حالات الفشل، accessibility، وhandoff قابل للتنفيذ. أي screen لا يربط state أو command أو query بعقد واضح يبقى prototype لا معيار قبول.
 
 ## افتراضات مفتوحة
 

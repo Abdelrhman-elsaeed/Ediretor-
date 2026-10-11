@@ -1,0 +1,119 @@
+{
+  "runId": "Q10-B-cold-2026-10-11T04-31-07-591Z",
+  "metadataPass": true,
+  "durationErrorSeconds": 0,
+  "frameCount": 360,
+  "timingMaxErrorSeconds": 3.333333342681044e-7,
+  "timingPass": true,
+  "fullDecodePass": true,
+  "parity": [
+    {
+      "frame": 0,
+      "matchedFrame": 0,
+      "meanAbsoluteError": 9.27531121399177,
+      "psnr": 24.232122160152834,
+      "pass": false
+    },
+    {
+      "frame": 29,
+      "matchedFrame": 28,
+      "meanAbsoluteError": 9.315282921810699,
+      "psnr": 24.20094518545339,
+      "pass": false
+    },
+    {
+      "frame": 30,
+      "matchedFrame": 30,
+      "meanAbsoluteError": 9.296113683127572,
+      "psnr": 24.213266606887345,
+      "pass": false
+    },
+    {
+      "frame": 60,
+      "matchedFrame": 60,
+      "meanAbsoluteError": 8.38994341563786,
+      "psnr": 24.735026669299074,
+      "pass": false
+    },
+    {
+      "frame": 89,
+      "matchedFrame": 88,
+      "meanAbsoluteError": 8.436556069958847,
+      "psnr": 24.695397061089977,
+      "pass": false
+    },
+    {
+      "frame": 90,
+      "matchedFrame": 90,
+      "meanAbsoluteError": 9.36681841563786,
+      "psnr": 24.14113081020137,
+      "pass": false
+    },
+    {
+      "frame": 179,
+      "matchedFrame": 178,
+      "meanAbsoluteError": 9.334804526748972,
+      "psnr": 24.189372021742766,
+      "pass": false
+    },
+    {
+      "frame": 180,
+      "matchedFrame": 180,
+      "meanAbsoluteError": 6.741779835390947,
+      "psnr": 25.78437073706538,
+      "pass": false
+    },
+    {
+      "frame": 269,
+      "matchedFrame": 268,
+      "meanAbsoluteError": 6.73048353909465,
+      "psnr": 25.807239922920658,
+      "pass": false
+    },
+    {
+      "frame": 270,
+      "matchedFrame": 270,
+      "meanAbsoluteError": 6.717685185185185,
+      "psnr": 25.809867407868605,
+      "pass": false
+    },
+    {
+      "frame": 329,
+      "matchedFrame": 328,
+      "meanAbsoluteError": 6.1727083333333335,
+      "psnr": 26.32771751682229,
+      "pass": false
+    },
+    {
+      "frame": 359,
+      "matchedFrame": 358,
+      "meanAbsoluteError": 6.762574588477366,
+      "psnr": 25.762592286625026,
+      "pass": false
+    }
+  ],
+  "pageErrors": [],
+  "sync": [
+    {
+      "windowStartMs": 500,
+      "offsetMs": 0,
+      "envelopeMeanSquareError": 1.68078705236835e-11,
+      "pass": true
+    },
+    {
+      "windowStartMs": 6505,
+      "offsetMs": 0,
+      "envelopeMeanSquareError": 3.3045894893441654e-9,
+      "pass": true
+    },
+    {
+      "windowStartMs": 10510,
+      "offsetMs": 0,
+      "envelopeMeanSquareError": 3.029968147112128e-7,
+      "pass": true
+    }
+  ],
+  "arabicVisualReview": "manual inspection required; screenshots retained",
+  "limitations": "Short fixtures only; marker audio is synthetic; Arabic text is authored overlay, not speech transcription",
+  "pass": false
+}

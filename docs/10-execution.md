@@ -20,7 +20,9 @@
 7. حدّث decisions/model إذا تغير النطاق أو عقد الوقت أو الحفظ، ثم أصلح الملفات التي تعتمد عليه.
 8. عند نجاح exit gate يمكن الانتقال للمرحلة التالية ضمن التفويض المتاح. لا حاجة لموافقة جديدة لكل تعديل روتيني.
 
-الطلب الحالي يخص التحليل والخطة؛ لا يبدأ تنفيذ التطبيق بمجرد إنشاء هذه الملفات.
+قرار المستخدم 2026-10-11 ألغى Figma وأوقف جولة benchmarking وأجّل renderer qualification. يستخدم تنفيذ Phase 01 brief التصميم وخريطة العقود مباشرة، مع evidence من التطبيق والمتصفح والميديا الفعلية. لا تُنقل واجهة legacy مباشرة إلى React الجديدة ولا تُحوّل quality gates غير المكتملة إلى نجاح.
+
+الحالة الحالية: تنفيذ الواجهة والحفظ والخدمات والـworker في Phase 01. [harness](../experiments/render-feasibility/README.md) وأدلة 00 محفوظة. المطلوب الحالي يجيز تنفيذ frontend الفعلية؛ سجّل النتائج في [phase-01.md](evidence/phase-01.md) دون إعادة benchmarking الطويل أو الكتابة فوق الأدلة السابقة.
 
 ## قالب evidence
 
@@ -35,15 +37,16 @@ Known limitations:
 Gate decision and reason:
 ~~~
 
-## prompt جاهز لبدء التنفيذ لاحقًا
+## prompt لاستكمال المرحلة الحالية
 
 ~~~text
-نفّذ Phase 00 من specs/000-feasibility.
+استكمل تنفيذ وتحقق Phase 01 من specs/001-project-core.
 اقرأ README.md و.specify/memory/constitution.md وdocs/07-decisions.md.
 طبّق AGENTS.md وdocs/12-engineering-rules.md، واستعن بمهارة ediretor-typescript-architect.
 تحقق من المصادر والكود الموجود؛ لا تعتبر ادعاءات الخطة نتائج قياس.
-نفّذ المهام المتاحة وسجل benchmark والقرار والدليل.
-لا تبدأ Phase 01 قبل حسم renderer وقيود الاختبار الأساسية.
+راجع حالة Git والأدلة الموجودة، ثم نفّذ رحلة import/edit/save/reopen/export وسجل نتائج الاختبارات والمتصفح والميديا.
+استخدم brief التصميم فقط؛ Figma مُلغى.
+لا تستأنف benchmarking الطويل إلا إذا احتاجه عيب محدد؛ qualification مؤجلة وليست ناجحة.
 ~~~
 
 ## تقدير العمل

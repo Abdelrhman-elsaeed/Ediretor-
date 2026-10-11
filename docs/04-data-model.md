@@ -1,6 +1,6 @@
 # نموذج المشروع والوقت والأوامر
 
-الحالة: تصميم تعاقدي مقترح، يحتاج schemas واختبارات تنفيذ في Phase 01.
+الحالة الحالية — 2026-10-11: schemaVersion 1 والأوامر والحفظ والـhistory للمسار المحلي منفذة في packages/contracts وpackages/domain. [عقد التشغيل](../specs/001-project-core/runtime-contract.md) يحدد الجزء المتاح وحدوده؛ نموذج المستقبل أدناه محفوظ، ولا يعني تنفيذ transcript أو sync أو scenes. الاسم الحالي لبداية المقطع في المشروع هو sequenceStartUs.
 
 ## قاموس البيانات
 

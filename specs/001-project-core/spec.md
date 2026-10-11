@@ -1,6 +1,6 @@
 # Phase 01 — أول محرر محفوظ يصدر فيديو
 
-الحالة: مخطط، لم ينفذ.
+الحالة: تنفيذ محلي جارٍ — 2026-10-11. المسار الفعلي في [runtime-contract.md](runtime-contract.md)، والدليل في [phase-01.md](../../docs/evidence/phase-01.md). لا تعني قابلية تشغيل الواجهة qualification للإصدار أو اكتمال كل quality fixtures.
 
 ## النتيجة
 
@@ -8,7 +8,7 @@
 
 ## التبعيات والمتطلبات
 
-نجاح Phase 00 واختيار renderer والـstack/runtime.
+قرار المستخدم 2026-10-11: أوقف benchmarking وأجّل renderer qualification وألغى Figma. لا تمنع هذه المتطلبات تنفيذ الواجهة. اختيار المسار المحلي المسجل في ADR-08 يستخدم React/Vite وNode 24 وSQLite وnative cuts worker؛ الجرافيك والأحمال الطويلة و4K غير معتمدة.
 
 التغطية: FR-01/02/11/12/14 (أساس الملكية)، ADR-03.
 

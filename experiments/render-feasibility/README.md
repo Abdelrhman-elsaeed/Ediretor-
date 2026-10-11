@@ -2,6 +2,8 @@
 
 تجربة مستقلة في الريبو الجديد: media حقيقية/اصطناعية → snapshot ثابتة → React Player → A أو B → تحقق الميديا. ليست محرر Phase 01. نتيجة البوابة والقياسات الفعلية في [دليل المرحلة](../../docs/evidence/phase-00.md).
 
+تحديث 2026-10-11: أوقف المستخدم جولة benchmarking وأجّل renderer qualification. تُحفظ التجربة والأدلة؛ لا تستأنف الأحمال الطويلة تلقائيًا. التطبيق الفعلي في apps/web وapps/api وapps/worker، ويُشغل بـ `npm.cmd run dev` حسب README الرئيسي. Figma مُلغى؛ quality gate السابقة لم تُحوّل إلى نجاح.
+
 ## التشغيل على Windows
 
 تحتاج Node.js 22+، npm، وFFmpeg/ffprobe على PATH مع libx264. التشغيل المرجعي Node 24.16.0 على Windows 10. لا DB أو Redis أو Docker أو API keys.
@@ -32,6 +34,9 @@ npm run validate -- artifacts/<run-id>
 
 ```powershell
 powershell -NoProfile -File experiments/render-feasibility/scripts/benchmark.ps1 -DeadlineSeconds 120
+powershell -NoProfile -File experiments/render-feasibility/scripts/benchmark.ps1 -Candidates B -DeadlineSeconds 120
+# Re-run only the short 4K output evaluation with time to complete:
+powershell -NoProfile -File experiments/render-feasibility/scripts/benchmark.ps1 -Candidates A -Fixtures Q10 -DeadlineSeconds 600
 # مثال تشغيل كامل لاحقًا مع ميزانية زمنية صريحة لكل run:
 npm run render -- Q05 A cold 14400
 npm run render -- Q06 B cold 43200
@@ -56,6 +61,10 @@ Q10 عينة **خرج** 3840×2160 لمدة 12 ثانية بمصدر اصطنا�
 - strict runtime validation وحدود المصدر وIDs وحظر unknown fields. full project persistence/history/transactions/transcription/templates deferred لمراحلها.
 
 ## معنى التحقق
+
+Graphics cache v2 resolves a separate composition with `graphicsOnly: true` before rendering. Changing `renderMedia.inputProps` alone does not change the resolved `composition.props`. Older cache keys are deliberately not reused. Before publishing a newly rendered cache entry, `graphics-alpha.ts` decodes every frame and checks that the template's unpainted corner is fully transparent and the frame count matches. A reproducible regression command is `node --import tsx experiments/render-feasibility/scripts/validate-graphics.ts <cache.mov> 60`; it rejects the historical opaque scene and accepts the corrected scene. Full preview/export validation remains necessary: the corner check alone does not establish visual parity.
+
+B's reusable graphics cache is evaluated only with non-overlapping graphics in these fixtures. Overlap is not safely represented by its current per-item cache key and first-active-graphic selection, despite the schema accepting it. Do not use this harness as proof of overlapping-layer support. Results and failed 4K parity checks are recorded in [the follow-up](../../docs/evidence/phase-00-followup-2026-10-11.md).
 
 `validate` مخصص للعينة القصيرة ذات marker source: فحص streams/count/duration، decode كامل، PTS لكل إطار، مقارنة 12 لقطة Player بالملف مع سماح إطار عرض واحد مسجل في `matchedFrame`، وارتباط envelope الصوت قرب البداية والوسط والنهاية بحد 40ms. PSNR>28dB وMAE<5/255 thresholds اختبارية للضغط؛ المراجعة البصرية العربية تبقى مستقلة. لا تشغله على Q05/Q06 باعتباره تحققًا طويلًا streaming؛ جمع PTS/audio في الذاكرة هنا محدود بالعينة القصيرة.
 

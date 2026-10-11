@@ -1,5 +1,9 @@
 # Phase 01 — خطة التنفيذ
 
+## Active implementation update — 2026-10-11
+
+The actual local slice follows [runtime-contract.md](runtime-contract.md): Vite/React, a Node HTTP adapter, SQLite repository/migration, separate native worker, shared kernel/compiler, and persisted Project Session. The PostgreSQL/outbox and broad renderer proposals below are superseded for the local slice by ADR-08. Jobs enqueue directly into the transactional SQLite store; no separate broker is needed. No later-phase scaffolding or legacy UI is introduced. Renderer benchmarks and Figma are deferred/cancelled by the user, not passed gates.
+
 ## الترتيب والقرارات
 
 1. أنشئ apps/web وapps/api وapps/worker وpackages/domain/contracts/composition حسب stack المختارة؛ كل package له وظيفة لا مجلد فارغ مكرر.

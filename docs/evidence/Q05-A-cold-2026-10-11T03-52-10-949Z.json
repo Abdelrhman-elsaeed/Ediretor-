@@ -1,0 +1,43 @@
+{
+  "runId": "Q05-A-cold-2026-10-11T03-52-10-949Z",
+  "fixture": "Q05",
+  "candidate": "A",
+  "cache": "cold",
+  "cacheMeaning": "application bundle/graphics cache only; OS cache uncontrolled",
+  "deadlineSeconds": 120,
+  "status": "deadline_exceeded",
+  "exitCode": 1,
+  "wallSeconds": 120.394581,
+  "outputSeconds": 3600,
+  "completedRtf": null,
+  "elapsedOverRequestedDuration": 0.033442939166666664,
+  "peakTreeWorkingSetBytes": 2242674688,
+  "peakRunDiskBytes": 47913304,
+  "samples": 54,
+  "samplingSeconds": 2,
+  "monitorError": "",
+  "progress": {
+    "stage": "remotion",
+    "renderedFrames": 233,
+    "encodedFrames": 0,
+    "totalFrames": 108000,
+    "progress": 0
+  },
+  "profile": {
+    "width": 1920,
+    "height": 1080,
+    "fps": {
+      "num": 30,
+      "den": 1
+    },
+    "codec": "libx264",
+    "preset": "veryfast",
+    "crf": 18,
+    "pixelFormat": "yuv420p",
+    "audio": "aac 192k 48000 stereo",
+    "hardwareAcceleration": "disabled; software encode and decode"
+  },
+  "limits": "8GiB sampled tree working set; 6GiB run scratch; deadline is censored failure, never a full-workload pass",
+  "buildHash": "221cb7544a1f478ca063d8202c0cca64018afe8f1985dcc4a20a8890af99b26f",
+  "peakSharedCacheDiskBytes": 229886072
+}
