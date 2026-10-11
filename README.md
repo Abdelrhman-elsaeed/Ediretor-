@@ -68,6 +68,10 @@ Timeline متعدد المسارات داخل ProjectDocument واحد بإصد�
 
 ## محتويات الحزمة
 
+Phase 02 adds live Deepgram transcription, occurrence-aware text cuts/corrections and Arabic/mixed captions to the existing editor. Open **تحرير بالنص**, select the speech source/language, transcribe, then use the result in the project. Enable captions there; export MP4 or download SRT/VTT from the export dialog. The cloud key belongs only in ignored `.env.local` as `DEEPGRAM_API_KEY=…`; restart API and worker after changing it. See [Phase 02 runtime contract](specs/002-transcript-editing/runtime-contract.md) and [evidence/limits](docs/evidence/phase-02.md).
+
+Run `npm.cmd run dev` and open `http://127.0.0.1:4317`. For production assets, run `npm.cmd run build`, then `npm.cmd start` and `npm.cmd run worker` in separate terminals; open `http://127.0.0.1:4318`. Caption burn-in requires the Playwright Chromium installation: `npx.cmd playwright install chromium` if absent. Verification: `npm.cmd run typecheck`, `npm.cmd test`, `npm.cmd run test:e2e`, `npm.cmd run test:e2e:transcript`, then `npm.cmd run test:e2e:transcript-states`. The transcript workflow uses `EDIRETOR_SPEECH_FIXTURE` or the downloaded public fixture described in [fixture provenance](docs/evidence/phase-02/fixtures.md); it never substitutes fake provider output. The states check reuses an isolated successful transcript-run database under `artifacts`, not user projects.
+
 | الملف | دوره |
 |---|---|
 | [Constitution](.specify/memory/constitution.md) | مبادئ تمنع تكرار مشاكل النسخة القديمة |

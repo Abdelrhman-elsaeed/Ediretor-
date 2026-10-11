@@ -3,11 +3,13 @@ import {randomUUID} from 'node:crypto';
 import {AppError, assetSchema, stateSchema, type Asset, type Job, type Project, type ProjectState, type SaveRequest} from '../../../packages/contracts/src/project';
 import {durationUs} from '../../../packages/domain/src/project/kernel';
 import type {JobRecord, JobRepository, ProjectRepository} from '../application/ports';
+import {transcriptSchema,type Transcript} from '../../../packages/contracts/src/transcript';
+import type {TranscriptRepository} from '../application/transcription';
 
 type Row = Record<string, unknown>;
 const readJson = (value: unknown): unknown => {if (typeof value !== 'string') throw new AppError('STORAGE_CORRUPT'); return JSON.parse(value);};
 const string = (value: unknown): string => {if (typeof value !== 'string') throw new AppError('STORAGE_CORRUPT'); return value;};
-export class SqliteRepository implements ProjectRepository, JobRepository {
+export class SqliteRepository implements ProjectRepository, JobRepository,TranscriptRepository {
   constructor(private readonly db: DatabaseSync) {}
   private query(sql: string, ...params: SQLInputValue[]): Row | undefined { return this.db.prepare(sql).get(...params); }
   private transaction<T>(run: () => T): T {
@@ -38,7 +40,8 @@ export class SqliteRepository implements ProjectRepository, JobRepository {
     const row = this.query('SELECT * FROM projects WHERE id = ? AND owner = ?', id, owner);
     if (!row) throw new AppError('PROJECT_NOT_FOUND');
     const assets = this.db.prepare('SELECT metadata_json FROM assets WHERE project_id = ?').all(id).map(r => assetSchema.parse(readJson(r.metadata_json)));
-    return {id, name: string(row.name), revisionId: string(row.revision_id), updatedAt: string(row.updated_at), state: stateSchema.parse(readJson(row.state_json)), assets};
+    const transcripts=this.db.prepare('SELECT metadata_json FROM transcripts WHERE project_id = ? ORDER BY rowid').all(id).map(r=>transcriptSchema.parse(readJson(r.metadata_json)));
+    return {id, name: string(row.name), revisionId: string(row.revision_id), updatedAt: string(row.updated_at), state: stateSchema.parse(readJson(row.state_json)), assets,transcripts};
   }
   save(owner: string, id: string, request: SaveRequest, apply: (project: Project) => ProjectState): Project {
     return this.transaction(() => {
@@ -67,9 +70,10 @@ export class SqliteRepository implements ProjectRepository, JobRepository {
   }
   addAsset(projectId: string, asset: Asset): void {this.db.prepare('INSERT INTO assets VALUES (?, ?, ?)').run(asset.id, projectId, JSON.stringify(asset));}
   private job(row: Row): Job {
+    const input=row.kind==='transcription'?readJson(row.payload_json) as {assetId:string}:undefined;
     return {id: string(row.id), projectId: string(row.project_id), kind: string(row.kind) as Job['kind'], status: string(row.status) as Job['status'],
       stage: string(row.stage), progress: Number(row.progress), error: row.error ? string(row.error) : null,
-      result: row.result_json ? JSON.parse(string(row.result_json)) as Job['result'] : null, createdAt: string(row.created_at)};
+      result: row.result_json ? JSON.parse(string(row.result_json)) as Job['result'] : null, createdAt: string(row.created_at),...(input?{inputAssetId:input.assetId}:{})};
   }
   enqueue(owner: string, projectId: string, kind: Job['kind'], payload: unknown): Job {
     this.load(owner, projectId);
@@ -118,11 +122,15 @@ export class SqliteRepository implements ProjectRepository, JobRepository {
     return this.db.prepare('UPDATE jobs SET lease_until = ?, stage = ?, progress = ?, updated_at = ? WHERE id = ? AND lease = ? AND status = \'running\'')
       .run(Date.now() + 10000, stage, Number.isFinite(progress) ? Math.max(0, Math.min(.99, progress)) : 0, new Date().toISOString(), id, lease).changes === 1;
   }
-  finish(id: string, lease: string, result: NonNullable<Job['result']>, asset?: Asset): boolean {
+  finish(id: string, lease: string, result: NonNullable<Job['result']>, asset?: Asset,transcript?:Transcript): boolean {
     return this.transaction(() => {
       const row = this.query('SELECT project_id FROM jobs WHERE id = ? AND lease = ? AND status = \'running\' AND lease_until >= ?', id, lease, Date.now());
       if (!row) return false;
       if (asset) this.addAsset(string(row.project_id), asset);
+      if(transcript){const t=transcriptSchema.parse(transcript);if(t.projectId!==row.project_id || t.id!==result.transcriptId)throw new AppError('TRANSCRIPT_FORBIDDEN');
+        const assetRow=this.query('SELECT metadata_json FROM assets WHERE id = ? AND project_id = ?',t.assetId,t.projectId);
+        if(!assetRow || assetSchema.parse(readJson(assetRow.metadata_json)).hash!==t.sourceHash)throw new AppError('TRANSCRIPT_FORBIDDEN');
+        this.db.prepare('INSERT INTO transcripts VALUES (?, ?, ?, ?, ?, ?)').run(t.id,t.projectId,t.assetId,id,t.hash,JSON.stringify(t));}
       this.db.prepare('UPDATE jobs SET status = \'succeeded\', stage = \'completed\', progress = 1, result_json = ?, updated_at = ? WHERE id = ?')
         .run(JSON.stringify(result), new Date().toISOString(), id);
       return true;
@@ -131,5 +139,24 @@ export class SqliteRepository implements ProjectRepository, JobRepository {
   fail(id: string, lease: string, error: string): void {
     this.db.prepare('UPDATE jobs SET status = \'failed\', stage = \'failed\', error = ?, updated_at = ? WHERE id = ? AND lease = ? AND status = \'running\'')
       .run(error.slice(0, 160), new Date().toISOString(), id, lease);
+  }
+  listTranscripts(owner:string,projectId:string):Transcript[]{
+    this.load(owner,projectId);return this.db.prepare('SELECT metadata_json FROM transcripts WHERE project_id = ? ORDER BY rowid').all(projectId).map(r=>transcriptSchema.parse(readJson(r.metadata_json)));
+  }
+  enqueueTranscription(owner:string,projectId:string,requestId:string,payload:unknown):Job{
+    const input=payload as {assetId:string;language:string};
+    return this.transaction(()=>{this.load(owner,projectId);
+      const old=this.query('SELECT * FROM transcription_requests WHERE project_id = ? AND request_id = ?',projectId,requestId);
+      if(old){if(old.asset_id!==input.assetId || old.language!==input.language)throw new AppError('IDEMPOTENCY_MISMATCH');return this.get(owner,string(old.job_id));}
+      const existing=this.db.prepare("SELECT * FROM jobs WHERE project_id = ? AND kind = 'transcription' AND status IN ('queued','running')").all(projectId).find(r=>{const p=readJson(r.payload_json) as typeof input;return p.assetId===input.assetId && p.language===input.language;});
+      const job=existing?this.job(existing):this.enqueue(owner,projectId,'transcription',payload);
+      this.db.prepare('INSERT INTO transcription_requests VALUES (?, ?, ?, ?, ?)').run(projectId,requestId,job.id,input.assetId,input.language);return job;
+    });
+  }
+  checkpoint(jobId:string,lease:string,index:number):unknown|null{
+    const row=this.query("SELECT response_json FROM transcription_chunks WHERE job_id = ? AND chunk_index = ? AND EXISTS (SELECT 1 FROM jobs WHERE id = ? AND lease = ? AND status = 'running' AND lease_until >= ?)",jobId,index,jobId,lease,Date.now());return row?readJson(row.response_json):null;
+  }
+  saveCheckpoint(jobId:string,lease:string,index:number,value:unknown):boolean{
+    return this.db.prepare("INSERT OR IGNORE INTO transcription_chunks SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM jobs WHERE id = ? AND lease = ? AND status = 'running' AND lease_until >= ?)").run(jobId,index,JSON.stringify(value),jobId,lease,Date.now()).changes===1;
   }
 }

@@ -1,0 +1,59 @@
+{
+  "prior": "D:\\Vibe Coding\\Ediretor ai\\artifacts\\phase-02-2026-10-11T06-14-17-079Z",
+  "artifacts": "D:\\Vibe Coding\\Ediretor ai\\artifacts\\phase-02-states-2026-10-11T06-16-34-083Z",
+  "startedAt": "2026-10-11T06:16:34.085Z",
+  "captionParity": {
+    "frame": 54,
+    "time": 1.8,
+    "sourceTime": 1.8,
+    "captionRegionLumaDifference": 0.931966
+  },
+  "captionTimingChecks": [
+    {
+      "cueIndex": 0,
+      "frame": 47,
+      "time": 1.5666666666666667,
+      "difference": 0.645702
+    },
+    {
+      "cueIndex": 0,
+      "frame": 48,
+      "time": 1.6,
+      "difference": 0.675267
+    },
+    {
+      "cueIndex": 1,
+      "frame": 134,
+      "time": 4.466666666666667,
+      "difference": 0.972567
+    },
+    {
+      "cueIndex": 1,
+      "frame": 135,
+      "time": 4.5,
+      "difference": 0.85412
+    },
+    {
+      "cueIndex": 3,
+      "frame": 281,
+      "time": 9.366666666666667,
+      "difference": 0.731505
+    }
+  ],
+  "virtualization": {
+    "words": 60000,
+    "mounted": 12,
+    "loadSearchScrollMs": 2879.491600000001
+  },
+  "results": [
+    "Actual preview Canvas raster over source proxy matches burned export caption region (luma difference <5), including Arabic shaping and mixed Latin text",
+    "Caption activation checked on preceding/starting frames at first and next cue, plus near edited ending; actual exported pixels agree with preview at each sample",
+    "60,000 explicitly synthetic words: bounded mounted rows, searchable unique word, scroll to far index; no lengthy media benchmark",
+    "Actual silent media imports; UI explains no audio; API refuses transcription without creating a job",
+    "Browser unavailable-provider state disables submission and provides local configuration action (health fault injection only)",
+    "Actual durable transcription cancellation preserves prior immutable transcript; browser exposes explicit retry",
+    "Browser loading and failed/timeout job states expose retry; fault injection cannot produce succeeded transcripts",
+    "Live Deepgram on a real silent audio stream returns zero words; truthful no-speech state is visible"
+  ],
+  "completedAt": "2026-10-11T06:16:59.973Z"
+}

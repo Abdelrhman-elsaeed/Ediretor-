@@ -1,0 +1,58 @@
+{
+  "startedAt": "2026-10-11T06:14:17.082Z",
+  "artifacts": "D:\\Vibe Coding\\Ediretor ai\\artifacts\\phase-02-2026-10-11T06-14-17-079Z",
+  "results": [
+    "Actual source upload → native audio extraction → live Deepgram nova-3/ar-EG → immutable transcript → attach through Project Session",
+    "Correction changes only display text → word deletion shortens sequence → exact undo/redo → autosave/reload retains caption style and corrected text",
+    "Actual corrected SRT/VTT and burned-in H.264 export; same Canvas font/layout used for preview and export",
+    "Arabic RTL transcript/editor, isolated playback highlighting, word search, desktop/tablet/phone screenshots in both themes, no horizontal overflow"
+  ],
+  "runtime": "canvas-captions-v1;playwright-1.62.1;chromium-151.0.7922.34;ffmpeg version N-122319-gf6a95c7eb7-20251231 Copyright (c) 2000-2025 the FFmpeg developers\r",
+  "provider": {
+    "provider": "deepgram",
+    "model": "nova-3",
+    "language": "ar-EG",
+    "modelVersions": [
+      "2026-01-27.33458"
+    ],
+    "words": 107,
+    "hash": "cdf794ff9101f3b55fe718b5e6992bb6b39b392e766aae6a753ec597de24dd10",
+    "sourceHash": "392f32bfd4f15f96343d85cd1a95487c99b24b712439215af9a72f4f21046ca0",
+    "rawKey": "058f4c8e-1c7e-44e4-bbe3-f9d720918a19-4fe69a29-11fa-4150-83c8-4e95e1bb4f49-raw"
+  },
+  "output": {
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1920,
+        "height": 1080,
+        "avg_frame_rate": "30/1",
+        "nb_frames": "348"
+      },
+      {
+        "codec_type": "audio",
+        "avg_frame_rate": "0/0",
+        "nb_frames": "545"
+      }
+    ],
+    "format": {
+      "duration": "11.600000"
+    }
+  },
+  "captionSample": {
+    "frame": 54,
+    "time": 1.8,
+    "cue": {
+      "startUs": "1600000",
+      "endUs": "4480000",
+      "lines": [
+        "أهلا TypeScript اسمي نديم فؤاد و",
+        "أنا لسه ناقلة نويورك السنة اللي"
+      ]
+    },
+    "previewRaster": "1920x1080"
+  },
+  "browserErrors": [],
+  "projectId": "c2a83747-314a-4bde-ad69-260cd8ff1880",
+  "completedAt": "2026-10-11T06:15:44.734Z"
+}

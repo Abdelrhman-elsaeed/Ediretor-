@@ -1,13 +1,15 @@
 import {AppError, documentSchema, type Asset, type Edit, type ProjectDocument, type ProjectState, type SessionAction} from '../../../contracts/src/project';
 import {cutClip} from '../editing/cut-clip';
 import {micros} from '../time/micros';
+import {defaultCaptionStyle,type Transcript} from '../../../contracts/src/transcript';
+import {wordDeletionRanges} from '../transcript/projection';
 
 export function durationUs(document: ProjectDocument): bigint {
   const last = document.sequence.clips.at(-1);
   return last ? BigInt(last.sequenceStartUs) + BigInt(last.durationUs) : 0n;
 }
 export function emptyState(projectId: string, revisionId: string): ProjectState {
-  const document: ProjectDocument = {schemaVersion: 1, projectId, revisionId, parentRevisionId: null,
+  const document: ProjectDocument = {schemaVersion: 2, transcriptRefs:[],displayCorrections:[],captionStyle:defaultCaptionStyle,projectId, revisionId, parentRevisionId: null,
     sequence: {canvas: {width: 1920, height: 1080}, fps: {num: 30, den: 1}, tracks: [{id: 'picture', kind: 'video'}, {id: 'sound', kind: 'linked-audio'}], clips: []}, assetRefs: []};
   return {document, history: [document], cursor: 0};
 }
@@ -26,9 +28,30 @@ export function validateDocument(input: unknown): ProjectDocument {
     start += BigInt(clip.durationUs);
   }
   if (start > 86_400_000_000n) throw new AppError('TIME_OUT_OF_RANGE');
+  const refs=document.transcriptRefs??[];
+  if(new Set(refs.map(r=>r.id)).size!==refs.length || new Set(refs.map(r=>r.assetId)).size!==refs.length)throw new AppError('DUPLICATE_TRANSCRIPT');
+  const corrections=document.displayCorrections??[];
+  if(new Set(corrections.map(c=>`${c.transcriptId}:${c.wordId}`)).size!==corrections.length || corrections.some(c=>!refs.some(r=>r.id===c.transcriptId)))throw new AppError('INVALID_CORRECTION');
   return document;
 }
-function applyEdit(document: ProjectDocument, command: Edit, assets: readonly Asset[], commandId: string): ProjectDocument {
+function applyEdit(document: ProjectDocument, command: Edit, assets: readonly Asset[], commandId: string,transcripts:readonly Transcript[]): ProjectDocument {
+  document={...document,schemaVersion:2,transcriptRefs:document.transcriptRefs??[],displayCorrections:document.displayCorrections??[],captionStyle:document.captionStyle??defaultCaptionStyle};
+  if(command.type==='AttachTranscript'){
+    const t=transcripts.find(t=>t.id===command.ref.id && t.assetId===command.ref.assetId && t.hash===command.ref.hash && t.projectId===document.projectId);
+    if(!t || !assets.some(a=>a.id===t.assetId && a.hash===t.sourceHash))throw new AppError('TRANSCRIPT_FORBIDDEN');
+    const refs=[...(document.transcriptRefs??[]).filter(r=>r.assetId!==t.assetId),command.ref];
+    return validateDocument({...document,transcriptRefs:refs,displayCorrections:(document.displayCorrections??[]).filter(c=>refs.some(r=>r.id===c.transcriptId))});
+  }
+  if(command.type==='CorrectWordText'){
+    if(!document.transcriptRefs?.some(r=>r.id===command.transcriptId)||!transcripts.find(t=>t.id===command.transcriptId)?.words.some(w=>w.id===command.wordId))throw new AppError('WORD_NOT_FOUND');
+    return validateDocument({...document,displayCorrections:[...(document.displayCorrections??[]).filter(c=>c.transcriptId!==command.transcriptId || c.wordId!==command.wordId),{transcriptId:command.transcriptId,wordId:command.wordId,text:command.text}]});
+  }
+  if(command.type==='SetCaptionStyle')return validateDocument({...document,captionStyle:command.style});
+  if(command.type==='DeleteWords'){
+    const ranges=wordDeletionRanges(document,transcripts,command.anchors);
+    for(const [index,r] of [...ranges].reverse().entries())document=applyEdit(document,{type:'RippleDeleteRange',startUs:r.startUs.toString(),endUs:r.endUs.toString()},assets,`${commandId}:words:${index}`,transcripts);
+    return document;
+  }
   let clips = document.sequence.clips.map(c => ({...c}));
   let refs = [...document.assetRefs];
   if (command.type === 'InsertClip') {
@@ -62,14 +85,14 @@ function applyEdit(document: ProjectDocument, command: Edit, assets: readonly As
   return validateDocument({...document, sequence: {...document.sequence, clips}, assetRefs: refs});
 }
 /** Batch edits apply on a temporary document; a failure cannot mutate the input. */
-export function applyAction(state: ProjectState, action: SessionAction, assets: readonly Asset[]): ProjectState {
+export function applyAction(state: ProjectState, action: SessionAction, assets: readonly Asset[],transcripts:readonly Transcript[]=[]): ProjectState {
   if (action.kind !== 'edit') {
     const cursor = state.cursor + (action.kind === 'undo' ? -1 : 1), entry = state.history[cursor];
     if (!entry) throw new AppError(action.kind === 'undo' ? 'NOTHING_TO_UNDO' : 'NOTHING_TO_REDO');
     return {...state, cursor, document: {...entry, revisionId: state.document.revisionId, parentRevisionId: state.document.parentRevisionId}};
   }
   let document = state.document;
-  for (const command of action.commands) document = applyEdit(document, command, assets, action.commandId);
+  for (const command of action.commands) document = applyEdit(document, command, assets, action.commandId,transcripts);
   const history = [...state.history.slice(0, state.cursor + 1), document].slice(-100);
   return {document, history, cursor: history.length - 1};
 }

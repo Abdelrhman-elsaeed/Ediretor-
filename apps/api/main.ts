@@ -13,11 +13,16 @@ import {SqliteRepository} from './infrastructure/repository';
 import {LocalStorage} from './infrastructure/storage';
 import {localConfig} from './infrastructure/config';
 import {native} from '../worker/native-media';
+import {TranscriptionService} from './application/transcription';
+import {captionRuntime} from '../worker/caption-raster';
 
 const config = localConfig(), db = openDatabase(join(config.data, 'project.sqlite'));
 const repo = new SqliteRepository(db), storage = new LocalStorage(join(config.data, 'assets'));
 await storage.init();
 const service = new ProjectService(repo, repo, storage), owner = config.owner;
+const transcription=new TranscriptionService(repo,repo,storage,()=>!!process.env.DEEPGRAM_API_KEY);
+let captionsRuntime:string|undefined;
+try{captionsRuntime=await captionRuntime(AbortSignal.timeout(10000));}catch{console.error(JSON.stringify({event:'caption-runtime-unavailable'}));}
 const allowedOrigins = new Set([`http://127.0.0.1:${config.port}`, `http://localhost:${config.port}`, 'http://127.0.0.1:4317', 'http://localhost:4317']);
 let mediaTools = false;
 try {await native('ffmpeg', ['-version'], AbortSignal.timeout(5000)); await native('ffprobe', ['-version'], AbortSignal.timeout(5000)); mediaTools = true;} catch {}
@@ -57,7 +62,7 @@ const server = createServer(async (req, res) => {
     const host = req.headers.host ?? '';
     if (!/^(127\.0\.0\.1|localhost):(4317|\d+)$/.test(host)) throw new AppError('ORIGIN_FORBIDDEN');
     const url = new URL(req.url ?? '/', `http://127.0.0.1:${config.port}`), path = url.pathname;
-    if (path === '/api/health' && req.method === 'GET') {send(res, {profile:'local', storage:'sqlite', mediaTools, worker: 'separate-process'}); return;}
+    if (path === '/api/health' && req.method === 'GET') {send(res, {profile:'local', storage:'sqlite', mediaTools, worker: 'separate-process',transcriptionAvailable:!!process.env.DEEPGRAM_API_KEY,captionRuntime:captionsRuntime??null}); return;}
     if (path === '/api/projects' && req.method === 'GET') {
       const offset = z.coerce.number().int().min(0).max(100000).parse(url.searchParams.get('offset') ?? 0);
       send(res, service.list(owner, (url.searchParams.get('search') ?? '').slice(0,120), offset)); return;
@@ -66,16 +71,22 @@ const server = createServer(async (req, res) => {
       const data = z.object({name:z.string().trim().min(1).max(120)}).strict().parse(await body(req));
       send(res, service.create(owner, data.name), 201); return;
     }
-    const projectMatch = /^\/api\/projects\/([^/]+)(?:\/(save|import|jobs|export|thumbnail))?$/.exec(path);
+    const projectMatch = /^\/api\/projects\/([^/]+)(?:\/(save|import|jobs|export|thumbnail|transcripts|transcribe|captions))?$/.exec(path);
     if (projectMatch) {
       const id = idSchema.parse(projectMatch[1]), action = projectMatch[2];
       if (!action && req.method === 'GET') {send(res, service.load(owner,id)); return;}
       if (action === 'save' && req.method === 'POST') {send(res, service.save(owner,id,saveSchema.parse(await body(req)))); return;}
       if (action === 'jobs' && req.method === 'GET') {send(res, repo.listJobs(owner,id)); return;}
+      if(action==='transcripts' && req.method==='GET'){send(res,transcription.list(owner,id));return;}
+      if(action==='transcribe' && req.method==='POST'){send(res,await transcription.start(owner,id,await body(req)),202);return;}
+      if(action==='captions' && req.method==='GET'){
+        const revisionId=idSchema.parse(url.searchParams.get('revisionId')),format=z.enum(['srt','vtt']).parse(url.searchParams.get('format'));
+        const text=service.subtitles(owner,id,revisionId,format);res.writeHead(200,{'Content-Type':format==='vtt'?'text/vtt; charset=utf-8':'application/x-subrip; charset=utf-8','Cache-Control':'no-store','Content-Disposition':`attachment; filename="ediretor-captions.${format}"`});res.end(text);return;
+      }
       if (action === 'export' && req.method === 'POST') {
         if (!mediaTools) throw new AppError('MEDIA_TOOLS_UNAVAILABLE');
         const input = z.object({revisionId:idSchema}).strict().parse(await body(req));
-        send(res, await service.export(owner,id,input.revisionId),202); return;
+        send(res, await service.export(owner,id,input.revisionId,captionsRuntime),202); return;
       }
       if (action === 'thumbnail' && req.method === 'GET') {
         const asset = service.load(owner,id).assets[0];

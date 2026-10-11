@@ -4,6 +4,8 @@
 
 ## قاموس البيانات
 
+Phase 02 implementation adds readable document schema 2 (`transcriptRefs`, `displayCorrections`, `captionStyle`) and preserves schema 1 revisions/history/receipts. Immutable words live in separate transcript records, referenced by ID/source/hash; raw responses remain separate. Correction scope is source word; delete scope includes clip occurrence. Provider normalization repairs retain their reported timestamp and review flag. Detailed implemented fields and migration policy: [runtime contract](../specs/002-transcript-editing/runtime-contract.md).
+
 | الكيان | معناه |
 |---|---|
 | Project | هوية المشروع ومالكه ومؤشر revision الحالية |

@@ -99,3 +99,13 @@ Cloudflare/VM/object storage providers لم تُحسم.
 | O09 | لغات الواجهة والاسم والهوية الشخصية؟ | عربية أساسية مع مصطلحات تقنية إنجليزية وtheme محايدة | قبل Phase 04/08 |
 
 لا تمنع الأسئلة المفتوحة إعداد هذه الخطة. مرحلة تعتمد على إجابة لا تفترض أنها جاءت لمجرد مرور وقت؛ يمكن متابعة أعمالها المستقلة فقط.
+
+## ADR-09 — Phase 02 transcript and bounded caption strategy — 2026-10-11
+
+Use the Phase 01 React/Node 24/SQLite/separate FFmpeg-worker stack. Select explicit `nova-3` / `ar-EG` for Egyptian Arabic from current official provider documentation; retain actual returned model versions, normalization version/options and raw responses. Do not select `multi` for Arabic when its documented list excludes Arabic. Source words are immutable; corrections are source-word display overrides and text cuts are occurrence-anchored Kernel commands.
+
+Keep the existing native cuts renderer and add shared Chromium Canvas raster captions at final mux. This gives the same shaping/geometry function and pinned font in preview/export without adopting an unqualified general scene renderer. Static cue PNGs and a sparse concat stream avoid a full-length transparent intermediate or one filter per word; caption-enabled exports require a final video encode. Pin actual Chromium/Playwright/FFmpeg versions and reject changed runtimes/fonts. Supported bounds remain 10 minutes / 200 clips / 1080p30; speed/resource qualification of maximal caption density is deferred. See [runtime contract](../specs/002-transcript-editing/runtime-contract.md) and [evidence](evidence/phase-02.md).
+
+## ADR-10 — Tool workspace after manual testing — 2026-10-11
+
+The user requested less clutter and a sidebar that collects tools. Keep one tool catalog and one active drawer for media, transcript, captions, properties and jobs. Drawer width/timeline height are adjustable browser UI preferences; they do not enter editing revisions. Use an overlay drawer on narrow screens and preserve the actual preview canvas aspect ratio. Keep text search/selection/corrections separate from caption configuration; both caption download entry points share saved-revision semantics. Reuse the existing Kernel/Session/media stack and identity rather than introducing another editing state or infrastructure. The observed provider trailing-word bug also requires bounded, provenance-preserving normalization `dg-words-v2`; existing v1 records remain immutable. See [follow-up evidence](evidence/editor-tools-2026-10-11.md).

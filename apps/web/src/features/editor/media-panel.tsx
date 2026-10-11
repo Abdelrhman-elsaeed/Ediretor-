@@ -1,0 +1,7 @@
+import type {Project} from '../../../../../packages/contracts/src/project';
+import {Icon} from '../../ui/icon';
+import {formatTime} from './time';
+
+export function MediaPanel({project,onImport,onInsert}:{project:Project;onImport:()=>void;onInsert:(assetId:string)=>void}){
+  return <section className="media-panel" aria-label="وسائط المشروع"><div className="media-panel-actions"><span>{project.assets.length} مصدر</span><button className="button small" onClick={onImport}><Icon name="plus" size={16}/>استيراد مصدر</button></div><div className="media-list">{project.assets.map(asset=><article className="media-item" key={asset.id}><img src={`/api/assets/${project.id}/${asset.id}/thumbnail`} width={240} height={135} alt={`صورة من ${asset.name}`} loading="lazy"/><strong><bdi dir="ltr">{asset.name}</bdi></strong><div className="media-metadata"><span className="mono" dir="ltr">{formatTime(BigInt(asset.durationUs))}</span><span>{asset.hasAudio?'فيديو وصوت':'فيديو بلا صوت'}</span></div><button className="button small full" onClick={()=>onInsert(asset.id)}><Icon name="plus" size={15}/>إضافة إلى الخط الزمني</button></article>)}{!project.assets.length?<div className="tool-empty"><Icon name="upload" size={32}/><h3>أضف تسجيلك الأول</h3><p>اختر فيديو لبدء التحرير.</p><button className="button primary small" onClick={onImport}>اختيار فيديو</button></div>:null}</div><p className="panel-note">مصادرك الأصلية محفوظة. القص لا يغيّر ملفاتك.</p></section>;
+}

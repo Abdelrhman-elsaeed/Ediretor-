@@ -1,5 +1,21 @@
 import {AppError} from '../../../../packages/contracts/src/project';
 const messages: Record<string,string> = {
+  TRANSCRIPTION_UNAVAILABLE:'خدمة التفريغ غير متاحة. اضبط DEEPGRAM_API_KEY في إعدادات الخدمة ثم أعد تشغيلها.',
+  TRANSCRIPTION_CREDENTIALS:'رفض Deepgram المفتاح. حدّثه في إعدادات الخدمة ثم أعد المحاولة.',
+  TRANSCRIPTION_REJECTED:'رفض مزوّد التفريغ التسجيل أو الخيارات. راجع اللغة والصوت.',
+  TRANSCRIPTION_TIMEOUT:'انتهت مهلة التفريغ بعد محاولات محدودة. أعد المحاولة؛ المقاطع المكتملة محفوظة.',
+  TRANSCRIPTION_PROVIDER_FAILED:'تعذر الوصول إلى مزوّد التفريغ بعد ثلاث محاولات. أعد المحاولة لاحقًا.',
+  TRANSCRIPT_INVALID:'رد التفريغ أو توقيته غير صالح. لم تُضف كلمات؛ أعد المحاولة.',
+  TRANSCRIPT_UNAVAILABLE:'تعذر العثور على التفريغ المثبت للمشروع. افتح الإصدار المحفوظ أو استعد بياناته.',
+  SILENT_SOURCE:'هذا المصدر بلا مسار صوت. لا يحتاج إلى تفريغ.',
+  WORD_NOT_FOUND:'تغيّر ظهور الكلمة بعد القص. أعد تحديد الكلمات.',
+  AMBIGUOUS_WORD_BOUNDARY:'حدود الكلام متداخلة أو قريبة جدًا من القص. حدّد كلمات مجاورة أو استخدم القص اليدوي.',
+  CAPTION_OVERFLOW:'الكابشن تتجاوز المساحة المتاحة. قصّر التصحيح ثم أعد التصدير.',
+  NO_CAPTIONS:'لا توجد كلمات في التسلسل لتصدير الكابشن. استخدم التفريغ وأضف المصدر إلى الخط الزمني.',
+  CAPTION_RUNTIME_UNAVAILABLE:'أداة رسم الكابشن غير متاحة. ثبّت Chromium الخاص بـ Playwright ثم أعد تشغيل الخدمة.',
+  CAPTION_RUNTIME_MISMATCH:'تغير إصدار رسم الكابشن بعد إنشاء المهمة. أعد التصدير من الإصدار المحفوظ.',
+  CAPTION_FONT_MISMATCH:'تغير خط الكابشن المثبت. استعد الخط المحلي ثم أعد المحاولة.',
+
   CONNECTION_LOST:'تعذر الاتصال بالخدمة المحلية. تحقق من تشغيل التطبيق ثم أعد المحاولة.',
   PREVIEW_UNAVAILABLE:'تعذر تشغيل المعاينة. أعد تحميلها وتحقق من ملف المصدر.',
   REVISION_CONFLICT:'حُفظ إصدار أحدث في نافذة أخرى. احتفظ بنسخة الاسترداد ثم افتح الإصدار المحفوظ.',
@@ -32,4 +48,4 @@ export function errorText(error: unknown): string {
   const code = error instanceof AppError ? error.code : typeof error === 'string' ? error : 'REQUEST_FAILED';
   return messages[code] ?? 'تعذر إكمال العملية. أعد المحاولة أو احتفظ بنسخة الاسترداد.';
 }
-export const stages: Record<string,string> = {queued:'في انتظار المعالجة',starting:'بدء المعالجة',probing:'قراءة معلومات الفيديو',hashing:'التحقق من المصدر',proxy:'تجهيز نسخة المعاينة',validating:'فحص الملف',completed:'اكتملت العملية',cancelled:'أُلغيت العملية',failed:'فشلت العملية','verifying-assets':'التحقق من ملفات المصدر',encoding:'ترميز الفيديو',muxing:'تجميع الملف'};
+export const stages: Record<string,string> = {'extracting-audio':'استخراج الصوت','transcribing':'تفريغ الكلام','normalizing':'فحص الكلمات والتوقيت','rendering-captions':'رسم الكابشن',queued:'في انتظار المعالجة',starting:'بدء المعالجة',probing:'قراءة معلومات الفيديو',hashing:'التحقق من المصدر',proxy:'تجهيز نسخة المعاينة',validating:'فحص الملف',completed:'اكتملت العملية',cancelled:'أُلغيت العملية',failed:'فشلت العملية','verifying-assets':'التحقق من ملفات المصدر',encoding:'ترميز الفيديو',muxing:'تجميع الملف'};

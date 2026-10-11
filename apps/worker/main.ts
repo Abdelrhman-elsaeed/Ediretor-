@@ -8,6 +8,9 @@ import {SqliteRepository} from '../api/infrastructure/repository';
 import {LocalStorage} from '../api/infrastructure/storage';
 import {executeExport, executeImport, prepareWork} from './media-execution';
 import {AppError, type Asset, type Job} from '../../packages/contracts/src/project';
+import type {Transcript} from '../../packages/contracts/src/transcript';
+import {executeTranscription} from './transcription-execution';
+import {DeepgramProvider} from './deepgram';
 
 const config = localConfig(), db = openDatabase(join(config.data, 'project.sqlite'));
 const repo = new SqliteRepository(db), storage = new LocalStorage(join(config.data, 'assets'));
@@ -28,10 +31,11 @@ while (!stopping) {
   const deadline = setTimeout(() => controller.abort(), 30 * 60 * 1000);
   const work = await prepareWork(config.data, job.id, lease);
   try {
-    const result: {result: NonNullable<Job['result']>; published: string[]; asset?: Asset} = job.kind === 'import'
+    const result: {result: NonNullable<Job['result']>; published: string[]; asset?: Asset;transcript?:Transcript} = job.kind === 'import'
       ? await executeImport(job, lease, storage, work, controller.signal, progress)
+      : job.kind==='transcription'?await executeTranscription(job,lease,storage,work,controller.signal,progress,new DeepgramProvider(process.env.DEEPGRAM_API_KEY??''),repo)
       : await executeExport(job, lease, storage, work, controller.signal, progress);
-    if (!repo.finish(job.id, lease, result.result, result.asset)) {
+    if (!repo.finish(job.id, lease, result.result, result.asset,result.transcript)) {
       for (const key of result.published) await rm(storage.path(key), {force: true});
     }
     console.log(JSON.stringify({event: 'job-finished', jobId: job.id, kind: job.kind, attempts: job.attempts}));

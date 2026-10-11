@@ -2,6 +2,8 @@ import {randomUUID} from 'node:crypto';
 import {AppError, saveSchema, type Job, type Project, type SaveRequest} from '../../../packages/contracts/src/project';
 import {applyAction, emptyState, validateDocument, durationUs} from '../../../packages/domain/src/project/kernel';
 import type {AssetStorage, ProjectRepository, JobRepository} from './ports';
+import {captionCues,subtitleFile} from '../../../packages/composition/src/captions';
+import {defaultCaptionStyle} from '../../../packages/contracts/src/transcript';
 
 export class ProjectService {
   constructor(private readonly projects: ProjectRepository, private readonly jobs: JobRepository, private readonly storage: AssetStorage) {}
@@ -15,14 +17,14 @@ export class ProjectService {
     if (new Set([request.commandId, ...request.actions.map(a => a.commandId)]).size !== request.actions.length + 1) throw new AppError('DUPLICATE_COMMAND');
     return this.projects.save(owner, id, request, project => {
       let state = project.state;
-      for (const action of request.actions) state = applyAction(state, action, project.assets);
+      for (const action of request.actions) state = applyAction(state, action, project.assets,project.transcripts??[]);
       validateDocument(state.document); return state;
     });
   }
   ingest(owner: string, projectId: string, payload: {upload: string; name: string; size: number}): Job {
     this.load(owner, projectId); return this.jobs.enqueue(owner, projectId, 'import', payload);
   }
-  async export(owner: string, projectId: string, revisionId: string): Promise<Job> {
+  async export(owner: string, projectId: string, revisionId: string,captionRuntime?:string): Promise<Job> {
     const project = this.load(owner, projectId), document = validateDocument(project.state.document);
     if (document.revisionId !== revisionId) throw new AppError('REVISION_CONFLICT');
     const length = durationUs(document);
@@ -33,7 +35,13 @@ export class ProjectService {
       if (!project.assets.some(a => a.id === asset.id && a.hash === asset.hash)) throw new AppError('ASSET_FORBIDDEN');
       if (!await this.storage.exists(asset.original)) throw new AppError('MISSING_MEDIA');
     }
-    return this.jobs.enqueue(owner, projectId, 'export', {document, renderer: 'native-cuts-v1', profile: 'mp4-1080p-30'});
+    const captions=document.captionStyle?.enabled?{cues:captionCues(document,project.transcripts??[]),fontHash:defaultCaptionStyle.fontHash,runtime:captionRuntime??'unavailable'}:undefined;
+    if(captions && (!captionRuntime || !captions.cues.length))throw new AppError(!captionRuntime?'CAPTION_RUNTIME_UNAVAILABLE':'NO_CAPTIONS');
+    return this.jobs.enqueue(owner, projectId, 'export', {document, renderer: 'native-cuts-v1', profile: 'mp4-1080p-30',...(captions?{captions}:{})});
+  }
+  subtitles(owner:string,projectId:string,revisionId:string,format:'srt'|'vtt'){
+    const project=this.load(owner,projectId);if(project.revisionId!==revisionId)throw new AppError('REVISION_CONFLICT');
+    const cues=captionCues(project.state.document,project.transcripts??[]);if(!cues.length)throw new AppError('NO_CAPTIONS');return subtitleFile(cues,format);
   }
   resolveAsset(owner: string, projectId: string, assetId: string, kind: 'original' | 'proxy' | 'thumbnail'): string {
     const asset = this.load(owner, projectId).assets.find(a => a.id === assetId);

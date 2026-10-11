@@ -5,6 +5,7 @@ import {compile} from '../../packages/composition/src/compile';
 import type {JobRecord} from '../api/application/ports';
 import type {LocalStorage} from '../api/infrastructure/storage';
 import {native, probe, hashFile} from './native-media';
+import {captionOverlay,captionRuntime} from './caption-raster';
 
 type Progress = (stage: string, value: number) => void;
 const seconds = (us: bigint) => (Number(us) / 1_000_000).toFixed(6);
@@ -78,9 +79,18 @@ export async function executeExport(job: JobRecord, lease: string, storage: Loca
   await writeFile(join(work, 'concat.txt'), parts.join('\n'));
   await writeFile(join(work, 'audio-concat.txt'), audioParts.join('\n'));
   const output = join(work, 'output.mp4');
+  let captionInput:string|undefined;
+  if(payload.document.captionStyle?.enabled && !payload.captions)throw new AppError('NO_CAPTIONS');
+  if(payload.captions){progress('rendering-captions',.91);
+    if(payload.captions.runtime!==await captionRuntime(signal))throw new AppError('CAPTION_RUNTIME_MISMATCH');
+    if(payload.captions.fontHash!==payload.document.captionStyle?.fontHash)throw new AppError('CAPTION_FONT_MISMATCH');
+    captionInput=await captionOverlay(payload.captions.cues,plan.frames,plan.canvas.width,plan.canvas.height,work,signal);
+  }
   progress('muxing', .92);
   await native('ffmpeg', [...baseArgs, '-f','concat','-safe','1','-i',join(work, 'concat.txt'),
-    '-f','concat','-safe','1','-i',join(work, 'audio-concat.txt'),'-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-ar','48000','-ac','2',
+    '-f','concat','-safe','1','-i',join(work, 'audio-concat.txt'),
+    ...(captionInput?['-f','concat','-safe','0','-i',captionInput,'-filter_complex','[0:v][2:v]overlay=0:0:format=auto:eof_action=pass,format=yuv420p,fps=30[out]','-map','[out]','-c:v','libx264','-preset','veryfast','-crf','20','-threads','2','-r','30','-fps_mode','cfr','-frames:v',String(plan.frames)]:['-map','0:v:0','-c:v','copy']),
+    '-map','1:a:0','-c:a','aac','-ar','48000','-ac','2',
     '-t',(plan.frames/30).toFixed(6),'-movflags','+faststart',output], signal);
   progress('validating', .96);
   const metadata = await probe(output, signal), video = metadata.streams.find(s => s.codec_type === 'video');

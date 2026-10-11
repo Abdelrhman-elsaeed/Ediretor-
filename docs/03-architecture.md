@@ -24,6 +24,8 @@
 
 ## Modules وواجهاتها
 
+Phase 02 extends the active local stack with an application transcription port, a Deepgram worker adapter, immutable source transcripts and occurrence projection. Transcript commands reuse the existing Kernel/Session. Bounded captions use one shared Canvas draw function in preview/Chromium rasterization plus one FFmpeg overlay at final mux; no deferred scene renderer is qualified by this change. See the [Phase 02 runtime contract](../specs/002-transcript-editing/runtime-contract.md) for job fencing, provenance, cut boundaries, timing and font/runtime pins.
+
 | Module | Interface الرئيسية المقترحة | Implementation التي يخفيها |
 |---|---|---|
 | Editing Kernel | apply(document, commandBatch) → result أو conflict/errors | validation، linking، ripple، time mapping، invertibility |

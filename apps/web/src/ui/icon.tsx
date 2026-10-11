@@ -1,4 +1,5 @@
 const paths = {
+  text:'M4 5h16M4 10h16M4 15h10M4 20h7',captions:'M3 5h18v14H3zM6 10h4m-4 4h4m4-4h4m-4 4h4',activity:'M3 12h4l3-8 4 16 3-8h4',
   plus:'M12 5v14M5 12h14', folder:'M3 7h7l2 2h9v11H3zM3 7V4h7l2 3',
   upload:'M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6', film:'M3 3h18v18H3zM7 3v18M17 3v18M3 8h4m-4 8h4m10-8h4m-4 8h4',
   play:'m9 5 11 7-11 7z', pause:'M8 5v14M16 5v14', cut:'M9 9 21 3M9 15l12 6M9 9l6 3-6 3M3 3a4 4 0 1 0 6 6 4 4 0 0 0-6-6zm0 12a4 4 0 1 0 6 6 4 4 0 0 0-6-6z',

@@ -21,7 +21,8 @@ export const api = {
   cancel: (id: string) => request(`/api/jobs/${id}/cancel`,jobSchema,post({})),
   retry: (id: string) => request(`/api/jobs/${id}/retry`,jobSchema,post({})),
   export: (id: string, revisionId: string) => request(`/api/projects/${id}/export`,jobSchema,post({revisionId})),
-  health: () => request('/api/health',z.object({mediaTools:z.boolean(),profile:z.literal('local')})),
+  transcribe:(id:string,assetId:string,language:'ar-EG'|'ar'|'en',requestId:string)=>request(`/api/projects/${id}/transcribe`,jobSchema,post({assetId,language,requestId})),
+  health: () => request('/api/health',z.object({mediaTools:z.boolean(),profile:z.literal('local'),transcriptionAvailable:z.boolean().optional(),captionRuntime:z.string().nullable().optional()})),
 };
 /** Upload progress comes from actual bytes transmitted; processing is a separate durable job. */
 export function upload(projectId: string, file: File, signal: AbortSignal, progress: (value: number) => void) {
