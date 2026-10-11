@@ -23,7 +23,8 @@
     "preview": "vite --config experiments/render-feasibility/vite.config.ts",
     "studio": "remotion studio experiments/render-feasibility/src/index.ts --public-dir experiments/render-feasibility/public --port 3101",
     "render": "tsx experiments/render-feasibility/scripts/render.ts",
-    "validate": "tsx experiments/render-feasibility/scripts/validate.ts"
+    "validate": "tsx experiments/render-feasibility/scripts/validate.ts",
+    "test:e2e:multitrack": "tsx scripts/verify-multitrack.ts"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.518",

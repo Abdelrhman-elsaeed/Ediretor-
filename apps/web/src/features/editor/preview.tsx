@@ -19,10 +19,10 @@ function Transport({playback}: {playback:Playback}) {
   </div>{view.error ? <p className="error preview-error" role="alert">{errorText(view.error)} <button className="text-button" onClick={()=>{playback.seek(playback.currentUs);}}>إعادة تحميل المعاينة</button></p> : null}</>;
 }
 export function Preview({playback,document,transcripts=[]}: {playback:Playback;document:ProjectDocument;transcripts?:readonly Transcript[]}) {
-  const video=useRef<HTMLVideoElement>(null), [safe,setSafe]=useState(false);
-  useEffect(()=>{if(video.current)return playback.attach(video.current);},[playback]);
+  const canvas=useRef<HTMLCanvasElement>(null),video=useRef<HTMLVideoElement>(null), [safe,setSafe]=useState(false);
+  useEffect(()=>{if(document.schemaVersion===3&&canvas.current)return playback.attachCanvas(canvas.current);if(video.current)return playback.attach(video.current);},[playback,document.schemaVersion]);
   useEffect(()=>playback.update(document),[playback,document]);
   return <section className="preview-panel" aria-label="معاينة الفيديو"><div className="panel-heading"><h2>المعاينة</h2><div className="preview-options"><span className="mono" dir="ltr">1920 × 1080</span><button className={`text-button ${safe?'active':''}`} onClick={()=>setSafe(v=>!v)} aria-pressed={safe}>حدود الأمان</button></div></div>
-    <div className="preview-stage"><div className="video-frame"><video ref={video} preload="metadata" playsInline aria-label="معاينة تسجيل المشروع"/>{document.captionStyle?.enabled?<CaptionPreview document={document} transcripts={transcripts} playback={playback}/>:null}{safe && document.sequence.clips.length ? <div className="safe-area" aria-hidden="true"/> : null}{!document.sequence.clips.length ? <div className="preview-empty"><Icon name="film" size={40}/><h3>مساحة لقصتك</h3><p>أضف مصدرًا من لوحة الوسائط لبدء التحرير.</p></div> : null}</div></div><Transport playback={playback}/>
+    <div className="preview-stage"><div className="video-frame">{document.schemaVersion===3?<canvas className="composition-canvas" ref={canvas} width={1920} height={1080} aria-label="معاينة المسارات"/>:<video ref={video} preload="metadata" playsInline aria-label="معاينة تسجيل المشروع"/>}{document.captionStyle?.enabled?<CaptionPreview document={document} transcripts={transcripts} playback={playback}/>:null}{safe && document.sequence.clips.length ? <div className="safe-area" aria-hidden="true"/> : null}{!document.sequence.clips.length ? <div className="preview-empty"><Icon name="film" size={40}/><h3>مساحة لقصتك</h3><p>أضف مصدرًا من لوحة الوسائط لبدء التحرير.</p></div> : null}</div></div><Transport playback={playback}/>
   </section>;
 }

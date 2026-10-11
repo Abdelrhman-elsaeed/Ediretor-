@@ -11,6 +11,8 @@ import {Inspector} from './inspector';
 import {Playback} from './playback';
 import {snapUs} from './time';
 import {ToolSidebar,editorTools,type EditorTool} from './tool-sidebar';
+import {SyncPanel} from './sync-panel';
+import {LayoutPanel} from './layout-panel';
 import {MediaPanel} from './media-panel';
 import {JobsPanel} from './jobs-panel';
 import {ResizeHandle} from './resize-handle';
@@ -51,11 +53,11 @@ export default function Editor({project,initialAsset,onBack}: {project:Project;i
   },[session]);
   const split=()=>{
     const atUs=snapUs(Number(playback.currentUs));
-    const target=clips.find(c=>atUs>BigInt(c.sequenceStartUs) && atUs<BigInt(c.sequenceStartUs)+BigInt(c.durationUs));
+    const target=(clip && atUs>BigInt(clip.sequenceStartUs)&&atUs<BigInt(clip.sequenceStartUs)+BigInt(clip.durationUs)?clip:undefined)??clips.find(c=>atUs>BigInt(c.sequenceStartUs) && atUs<BigInt(c.sequenceStartUs)+BigInt(c.durationUs));
     if(!target){setError(errorText('INVALID_SPLIT'));return;}
     edit([{type:'SplitClip',clipId:target.id,atUs:atUs.toString(),rightId:crypto.randomUUID()}]);setSelected(target.id);
   };
-  const remove=()=>{if(!clip)return;edit([{type:'RippleDeleteRange',startUs:clip.sequenceStartUs,endUs:(BigInt(clip.sequenceStartUs)+BigInt(clip.durationUs)).toString()}]);};
+  const remove=()=>{if(!clip)return;edit(view.state.document.schemaVersion===3&&view.state.document.sequence.tracks.find(t=>t.id===clip.trackId)?.kind==='supporting'?[{type:'RemoveClip',clipId:clip.id}]:[{type:'RippleDeleteRange',startUs:clip.sequenceStartUs,endUs:(BigInt(clip.sequenceStartUs)+BigInt(clip.durationUs)).toString(),...(view.state.document.schemaVersion===3?{clipIds:[clip.id]}:{})}]);};
   useEffect(()=>{
     const key=(e:KeyboardEvent)=>{
       if(e.target instanceof Element && e.target.closest('dialog'))return;
@@ -86,17 +88,19 @@ export default function Editor({project,initialAsset,onBack}: {project:Project;i
   {allError ? <div className="editor-alert" role="alert"><span>{allError}</span>{view.dirty ? <button className="text-button" onClick={recovery}>تنزيل نسخة الاسترداد</button>:null}{view.error==='REVISION_CONFLICT' ? <button className="text-button" disabled={!recoverySaved} onClick={()=>{void session.reload().then(()=>{setRecoverySaved(false);setError('');}).catch(e=>setError(errorText(e)));}}>فتح الإصدار المحفوظ</button> : <button className="text-button" onClick={()=>{setError('');void session.flush().catch(()=>{});}}>إعادة المحاولة</button>}</div> : view.recovered ? <div className="recovery-banner" role="status">استُعيدت تغييرات جلسة سابقة. راجعها ثم احفظها.<button className="text-button" onClick={()=>{void session.flush().catch(()=>{});}}>حفظ التغييرات</button></div> : null}
   <div className="editor-body"><ToolSidebar active={activeTool} onChange={setActiveTool} pending={pending}/><div className="editor-canvas"><div className="editor-workspace">
     {activeTool?<><div className="editor-tool-panel" id="editor-tool-panel"><div className="panel-heading"><h2>{title}</h2><button className="icon-button" aria-label={activeTool==='transcript'?'إغلاق النص':'إغلاق لوحة الأداة'} title="إغلاق لوحة الأداة" onClick={()=>setActiveTool(null)}><Icon name="close" size={18}/></button></div><div className="tool-panel-content">
-      {activeTool==='media'?<MediaPanel project={view.project} onImport={()=>setImporting(true)} onInsert={assetId=>{const clipId=crypto.randomUUID();edit([{type:'InsertClip',assetId,clipId}]);setSelected(clipId);}}/>:null}
+      {activeTool==='media'?<MediaPanel document={view.state.document} onEdit={edit} playhead={()=>playback.currentUs} project={view.project} onImport={()=>setImporting(true)} onInsert={assetId=>{const clipId=crypto.randomUUID();edit([{type:'InsertClip',assetId,clipId}]);setSelected(clipId);}}/>:null}
       {activeTool==='transcript'?<Suspense fallback={<div className="tool-empty" role="status">جارٍ فتح النص…</div>}><TranscriptPanel project={view.project} document={view.state.document} playback={playback} jobs={jobs} onEdit={edit} onRefresh={refresh}/></Suspense>:null}
       {activeTool==='captions'?<Suspense fallback={<div className="tool-empty" role="status">جارٍ فتح الكابشن…</div>}><CaptionsPanel document={view.state.document} transcripts={view.project.transcripts??[]} onEdit={edit} onTranscript={()=>setActiveTool('transcript')} onDownload={format=>downloadCaptions(session,format)}/></Suspense>:null}
-      {activeTool==='inspector'?<Inspector document={view.state.document} clip={clip} onError={e=>setError(errorText(e))} onDelete={remove} onTrim={(start,duration)=>{if(clip)edit([{type:'TrimClip',clipId:clip.id,sourceInUs:start.toString(),durationUs:duration.toString()}]);}}/>:null}
+      {activeTool==='inspector'?<Inspector onEdit={edit} document={view.state.document} clip={clip} onError={e=>setError(errorText(e))} onDelete={remove} onTrim={(start,duration)=>{if(clip)edit([{type:'TrimClip',clipId:clip.id,sourceInUs:start.toString(),durationUs:duration.toString()}]);}}/>:null}
+      {activeTool==='sync'?<SyncPanel project={view.project} document={view.state.document} onEdit={edit}/>:null}
+      {activeTool==='layout'?<LayoutPanel document={view.state.document} playback={playback} onEdit={edit}/>:null}
       {activeTool==='jobs'?<JobsPanel jobs={jobs} onCancel={id=>{void jobAction(id,'cancel');}} onRetry={id=>{void jobAction(id,'retry');}}/>:null}
     </div></div><ResizeHandle axis="panel" value={layout.panel} min={280} max={520} onChange={panel=>setLayout(old=>({...old,panel}))} onReset={()=>setLayout(old=>({...old,panel:360}))}/></>:null}
     <Preview playback={playback} document={view.state.document} transcripts={view.project.transcripts}/></div>
     <ResizeHandle axis="timeline" value={layout.timeline} min={180} max={360} onChange={timeline=>setLayout(old=>({...old,timeline}))} onReset={()=>setLayout(old=>({...old,timeline:216}))}/>
-    <Timeline document={view.state.document} playback={playback} selected={selected} onSelect={id=>{setSelected(id);if(activeTool!=='transcript')setActiveTool('inspector');}} onSplit={split} onDelete={remove}/>
+    <Timeline onEdit={edit} document={view.state.document} playback={playback} selected={selected} onSelect={id=>{setSelected(id);if(activeTool!=='transcript')setActiveTool('inspector');}} onSplit={split} onDelete={remove}/>
   </div></div>
-  {importing ? <Suspense fallback={<div role="status">جارٍ فتح الاستيراد…</div>}><ImportDialog project={view.project} onClose={()=>setImporting(false)} onComplete={(next,assetId)=>{setImporting(false);void session.refreshAssets().then(()=>{if(assetId)edit([{type:'InsertClip',assetId,clipId:crypto.randomUUID()}]);}).catch(e=>setError(errorText(e)));}}/></Suspense> : null}
+  {importing ? <Suspense fallback={<div role="status">جارٍ فتح الاستيراد…</div>}><ImportDialog project={view.project} onClose={()=>setImporting(false)} onComplete={(next,assetId)=>{setImporting(false);void session.refreshAssets().then(()=>{if(assetId&&!clips.length)edit([{type:'InsertClip',assetId,clipId:crypto.randomUUID()}]);}).catch(e=>setError(errorText(e)));}}/></Suspense> : null}
   {exporting ? <Suspense fallback={<div role="status">جارٍ فتح التصدير…</div>}><ExportDialog session={session} onClose={()=>setExporting(false)}/></Suspense> : null}
   </main>;
 }

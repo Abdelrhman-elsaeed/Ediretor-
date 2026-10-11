@@ -1,12 +1,12 @@
 import {AppError, documentSchema, type Asset, type Edit, type ProjectDocument, type ProjectState, type SessionAction} from '../../../contracts/src/project';
+import {applyMultitrack,validateMultitrack,isMultitrackCommand} from './multitrack';
 import {cutClip} from '../editing/cut-clip';
 import {micros} from '../time/micros';
 import {defaultCaptionStyle,type Transcript} from '../../../contracts/src/transcript';
 import {wordDeletionRanges} from '../transcript/projection';
 
 export function durationUs(document: ProjectDocument): bigint {
-  const last = document.sequence.clips.at(-1);
-  return last ? BigInt(last.sequenceStartUs) + BigInt(last.durationUs) : 0n;
+  return document.sequence.clips.reduce((end,c)=>{const next=BigInt(c.sequenceStartUs)+BigInt(c.durationUs);return next>end?next:end;},0n);
 }
 export function emptyState(projectId: string, revisionId: string): ProjectState {
   const document: ProjectDocument = {schemaVersion: 2, transcriptRefs:[],displayCorrections:[],captionStyle:defaultCaptionStyle,projectId, revisionId, parentRevisionId: null,
@@ -24,10 +24,11 @@ export function validateDocument(input: unknown): ProjectDocument {
     if (!asset) throw new AppError('MISSING_ASSET');
     if (ids.has(clip.id)) throw new AppError('DUPLICATE_CLIP');
     ids.add(clip.id);
-    if (BigInt(clip.sequenceStartUs) !== start || BigInt(clip.sourceInUs) + BigInt(clip.durationUs) > BigInt(asset.durationUs)) throw new AppError('INVALID_TIMING');
+    if ((document.schemaVersion!==3 && BigInt(clip.sequenceStartUs) !== start) || BigInt(clip.sourceInUs) + BigInt(clip.durationUs) > BigInt(asset.durationUs)) throw new AppError('INVALID_TIMING');
     start += BigInt(clip.durationUs);
   }
   if (start > 86_400_000_000n) throw new AppError('TIME_OUT_OF_RANGE');
+  validateMultitrack(document);
   const refs=document.transcriptRefs??[];
   if(new Set(refs.map(r=>r.id)).size!==refs.length || new Set(refs.map(r=>r.assetId)).size!==refs.length)throw new AppError('DUPLICATE_TRANSCRIPT');
   const corrections=document.displayCorrections??[];
@@ -35,7 +36,7 @@ export function validateDocument(input: unknown): ProjectDocument {
   return document;
 }
 function applyEdit(document: ProjectDocument, command: Edit, assets: readonly Asset[], commandId: string,transcripts:readonly Transcript[]): ProjectDocument {
-  document={...document,schemaVersion:2,transcriptRefs:document.transcriptRefs??[],displayCorrections:document.displayCorrections??[],captionStyle:document.captionStyle??defaultCaptionStyle};
+  document={...document,schemaVersion:document.schemaVersion===3?3:2,transcriptRefs:document.transcriptRefs??[],displayCorrections:document.displayCorrections??[],captionStyle:document.captionStyle??defaultCaptionStyle};
   if(command.type==='AttachTranscript'){
     const t=transcripts.find(t=>t.id===command.ref.id && t.assetId===command.ref.assetId && t.hash===command.ref.hash && t.projectId===document.projectId);
     if(!t || !assets.some(a=>a.id===t.assetId && a.hash===t.sourceHash))throw new AppError('TRANSCRIPT_FORBIDDEN');
@@ -49,9 +50,10 @@ function applyEdit(document: ProjectDocument, command: Edit, assets: readonly As
   if(command.type==='SetCaptionStyle')return validateDocument({...document,captionStyle:command.style});
   if(command.type==='DeleteWords'){
     const ranges=wordDeletionRanges(document,transcripts,command.anchors);
-    for(const [index,r] of [...ranges].reverse().entries())document=applyEdit(document,{type:'RippleDeleteRange',startUs:r.startUs.toString(),endUs:r.endUs.toString()},assets,`${commandId}:words:${index}`,transcripts);
+    for(const [index,r] of [...ranges].reverse().entries())document=applyEdit(document,{type:'RippleDeleteRange',startUs:r.startUs.toString(),endUs:r.endUs.toString(),...(document.schemaVersion===3?{clipIds:document.sequence.clips.filter(c=>command.anchors.some(a=>a.clipId===c.id)&&BigInt(c.sequenceStartUs)<r.endUs&&BigInt(c.sequenceStartUs)+BigInt(c.durationUs)>r.startUs).map(c=>c.id)}:{})},assets,`${commandId}:words:${index}`,transcripts);
     return document;
   }
+  if(document.schemaVersion===3 || isMultitrackCommand(command))return validateDocument(applyMultitrack(document,command,assets,commandId));
   let clips = document.sequence.clips.map(c => ({...c}));
   let refs = [...document.assetRefs];
   if (command.type === 'InsertClip') {
@@ -69,7 +71,7 @@ function applyEdit(document: ProjectDocument, command: Edit, assets: readonly As
         [{startUs: micros(start > cs ? start - cs : 0n), endUs: micros(end < ce ? end - cs : ce - cs)}], commandId)
         .map(c => ({...c, id: `${commandId}:${clips.findIndex(x => x.id === clip.id)}:${c.id.split(':').at(-1)}`, trackId: 'picture' as const, sourceInUs: c.sourceInUs.toString(), durationUs: c.durationUs.toString(), sequenceStartUs: c.sequenceStartUs.toString()}));
     });
-  } else {
+  } else if(command.type==='SplitClip'||command.type==='TrimClip') {
     const index = clips.findIndex(c => c.id === command.clipId), clip = clips[index];
     if (!clip) throw new AppError('CLIP_NOT_FOUND');
     if (command.type === 'SplitClip') {

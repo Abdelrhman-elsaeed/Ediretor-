@@ -9,7 +9,7 @@ export function compile(input: ProjectDocument) {
   return {canvas: document.sequence.canvas, fps: document.sequence.fps, durationUs: durationUs(document),
     frames: usToFrame(durationUs(document), document.sequence.fps, 'ceil'),
     segments: document.sequence.clips.map((c, index) => ({id: c.id, asset: assets.get(c.assetId)!,
-      sourceInUs: BigInt(c.sourceInUs), durationUs: BigInt(c.durationUs), sequenceStartUs: BigInt(c.sequenceStartUs),
+      clip:c, sourceInUs: BigInt(c.sourceInUs), durationUs: BigInt(c.durationUs), sequenceStartUs: BigInt(c.sequenceStartUs),
       startFrame: usToFrame(BigInt(c.sequenceStartUs), document.sequence.fps),
       endFrame: usToFrame(BigInt(c.sequenceStartUs) + BigInt(c.durationUs), document.sequence.fps,
         index === document.sequence.clips.length - 1 ? 'ceil' : 'floor')}))};

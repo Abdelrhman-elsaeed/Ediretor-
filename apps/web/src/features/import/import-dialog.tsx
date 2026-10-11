@@ -38,7 +38,7 @@ export default function ImportDialog({project,onClose,onComplete}: {project?:Pro
       <label className={`drop-zone ${busy ? 'is-busy' : ''}`} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();choose(e.dataTransfer.files[0]);}}>
         <Icon name="upload" size={32}/><strong>{file ? <bdi dir="ltr">{file.name}</bdi> : 'اسحب فيديوك إلى هنا'}</strong>
         <span>{file ? `${new Intl.NumberFormat('ar').format(file.size / 1024 / 1024)} MB` : 'أو اختر ملفًا من جهازك'}</span>
-        <input type="file" name="video" aria-label="اختيار ملف فيديو" accept="video/*,.mkv,.mov,.webm,.avi" disabled={busy} onChange={e=>choose(e.target.files?.[0])}/>
+        <input type="file" name="video" aria-label="اختيار ملف فيديو" accept="video/*,audio/*,image/png,image/jpeg,image/webp,.mkv,.mov,.webm,.avi" disabled={busy} onChange={e=>choose(e.target.files?.[0])}/>
       </label>
       <p className="muted">يُحتفظ بالمصدر كما هو. نجهّز نسخة للمعاينة؛ القص لا يغيّر الملف الأصلي.</p>
       {busy || job ? <div className="processing" role="status" aria-live="polite"><strong>{job ? stages[job.stage] ?? job.stage : 'رفع الملف…'}</strong>

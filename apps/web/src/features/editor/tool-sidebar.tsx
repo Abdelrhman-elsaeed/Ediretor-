@@ -5,6 +5,8 @@ import {Icon,type IconName} from '../../ui/icon';
 export const editorTools = [
   {id:'media',label:'الوسائط',icon:'film'},
   {id:'transcript',label:'تحرير بالنص',icon:'text'},
+  {id:'sync',label:'المزامنة والصوت',icon:'sound'},
+  {id:'layout',label:'توزيع الصورة',icon:'film'},
   {id:'captions',label:'الكابشن',icon:'captions'},
   {id:'inspector',label:'خصائص المقطع',icon:'settings'},
   {id:'jobs',label:'العمليات',icon:'activity'},

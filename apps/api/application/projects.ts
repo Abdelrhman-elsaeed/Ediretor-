@@ -1,3 +1,4 @@
+import {alignment} from '../../../packages/domain/src/project/multitrack';
 import {randomUUID} from 'node:crypto';
 import {AppError, saveSchema, type Job, type Project, type SaveRequest} from '../../../packages/contracts/src/project';
 import {applyAction, emptyState, validateDocument, durationUs} from '../../../packages/domain/src/project/kernel';
@@ -27,6 +28,8 @@ export class ProjectService {
   async export(owner: string, projectId: string, revisionId: string,captionRuntime?:string): Promise<Job> {
     const project = this.load(owner, projectId), document = validateDocument(project.state.document);
     if (document.revisionId !== revisionId) throw new AppError('REVISION_CONFLICT');
+    if(document.syncGroups?.some(g=>g.members.some(m=>alignment(m).status==='needs_alignment')))throw new AppError('NEEDS_ALIGNMENT');
+    if(document.layouts?.some(l=>l.needsReview))throw new AppError('NEEDS_REVIEW');
     const length = durationUs(document);
     if (length === 0n) throw new AppError('EMPTY_SEQUENCE');
     // A bounded working profile, not qualification of long-video/graphics/4K rendering.
@@ -37,7 +40,7 @@ export class ProjectService {
     }
     const captions=document.captionStyle?.enabled?{cues:captionCues(document,project.transcripts??[]),fontHash:defaultCaptionStyle.fontHash,runtime:captionRuntime??'unavailable'}:undefined;
     if(captions && (!captionRuntime || !captions.cues.length))throw new AppError(!captionRuntime?'CAPTION_RUNTIME_UNAVAILABLE':'NO_CAPTIONS');
-    return this.jobs.enqueue(owner, projectId, 'export', {document, renderer: 'native-cuts-v1', profile: 'mp4-1080p-30',...(captions?{captions}:{})});
+    return this.jobs.enqueue(owner, projectId, 'export', {document, renderer: document.schemaVersion===3?'native-multitrack-v1':'native-cuts-v1', profile: 'mp4-1080p-30',...(captions?{captions}:{})});
   }
   subtitles(owner:string,projectId:string,revisionId:string,format:'srt'|'vtt'){
     const project=this.load(owner,projectId);if(project.revisionId!==revisionId)throw new AppError('REVISION_CONFLICT');

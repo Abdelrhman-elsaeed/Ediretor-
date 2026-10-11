@@ -38,7 +38,7 @@ export async function hashFile(path: string, signal: AbortSignal): Promise<strin
   for await (const chunk of createReadStream(path, {signal})) hash.update(chunk);
   return hash.digest('hex');
 }
-const probeSchema = z.object({streams: z.array(z.object({codec_type: z.string(), width: z.number().optional(), height: z.number().optional(), avg_frame_rate: z.string().optional(), nb_frames: z.string().optional()})), format: z.object({duration: z.string()})});
+const probeSchema = z.object({streams: z.array(z.object({codec_type: z.string(), width: z.number().optional(), height: z.number().optional(), avg_frame_rate: z.string().optional(), nb_frames: z.string().optional()})), format: z.object({duration: z.string().optional()})});
 export async function probe(path: string, signal: AbortSignal) {
   return probeSchema.parse(JSON.parse(await native('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', path], signal)));
 }

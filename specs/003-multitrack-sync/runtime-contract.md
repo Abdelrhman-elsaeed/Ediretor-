@@ -1,0 +1,15 @@
+# Phase 03 runtime contract
+
+Implementation contract, 2026-10-11; acceptance evidence is recorded separately.
+
+Schema 3 extends readable schemas 1/2 in document JSON; upgrades occur on multitrack commands only. Immutable revisions, receipts and SQL migrations are retained. Track IDs are stable, with video/audio/supporting/linked-audio kinds and mute/hidden/locked flags. Occurrence IDs remain unique. Roles are camera, screen, primary-audio, supporting and combined; combined remains one crop-capable source. InsertClip still means independent sequential insertion; InsertMedia places an occurrence explicitly.
+
+SyncGroup members pin asset IDs and signed decimal microsecond offsets: groupTime = sourceTime + offset. Group origin and offsets determine initial placements; negative source coverage is trimmed rather than extended. Manual offsets, frame nudges, drag and reference markers are explicit commands. Two or more markers detect residual drift over 40ms; no rate correction or automatic alignment is performed. Sync membership does not imply edit linking. EditLinkGroup contains occurrence IDs and follows descendants after cuts; duplicates receive new, unlinked occurrences. Locked affected tracks reject the entire action.
+
+Manual global ripple removes a sequence interval from all intersecting tracks and shifts later content. Scoped transcript ripple cuts the selected occurrences and their edit links, shifts later content, and preserves unlinked spanning media. Split/trim/move propagate through explicit links. Layout events use absolute sequence time with ripple-follow policy; deleting an event marks it needs_review at the cut boundary. Removed word occurrences fail as WORD_NOT_FOUND; no anchor retargeting. No later scene/word-cue system is introduced.
+
+Visual transform is a normalized source crop and normalized canvas placement, separate from timing. Layout events select PiP/split/camera/screen/custom; supporting media overlays by track order. Gain and fades use occurrence-local source intervals; primary selection suppresses secondary sync audio. Optional supporting-audio ducking applies a fixed explicit gain while primary audio is active (no speech detector). Fade transitions are through black inside existing duration, require enough visible frames and never shorten the sequence; crossfade/automatic handle borrowing is deferred.
+
+Preview and native export share evaluated layout, source intervals, envelopes and ducking. Original media is verified against hashes; export pins native-multitrack-v1 plus the saved document/profile. Existing 600s/200-occurrence/1080p30 bounds remain. Media evidence must measure decoded pixels/audio around beginning/middle/end; metadata is insufficient. Export refuses needs_alignment and needs_review states. Long renderer qualification, AI/template/identity work remain deferred.
+
+UI extends the existing one-drawer sidebar. Selection, playhead and pending drags remain UI state; committed changes use Kernel/Session and shared history. Transcript selection and its below-text toolbar remain intact.

@@ -1,16 +1,18 @@
 import {useEffect,useRef,useState} from 'react';
-import type {ProjectDocument} from '../../../../../packages/contracts/src/project';
+import {MultitrackTimeline} from './multitrack-timeline';
+import type {Edit,ProjectDocument} from '../../../../../packages/contracts/src/project';
 import {Icon} from '../../ui/icon';
 import {durationUs} from '../../../../../packages/domain/src/project/kernel';
 import {formatTime,snapUs} from './time';
 import type {Playback} from './playback';
 
-export function Timeline({document,playback,selected,onSelect,onSplit,onDelete}: {document:ProjectDocument;playback:Playback;selected:string;onSelect:(id:string)=>void;onSplit:()=>void;onDelete:()=>void}) {
+export function Timeline({document,playback,selected,onSelect,onEdit,onSplit,onDelete}: {document:ProjectDocument;playback:Playback;selected:string;onEdit:(edits:Edit[])=>boolean;onSelect:(id:string)=>void;onSplit:()=>void;onDelete:()=>void}) {
   const length=durationUs(document), span=Number(length || 1n), marker=useRef<HTMLDivElement>(null), seeker=useRef<HTMLInputElement>(null), [zoom,setZoom]=useState(1);
   useEffect(()=>{
     const update=()=>{if(marker.current)marker.current.style.left=`calc((100% - 56px) * ${Number(playback.currentUs)/span})`;if(seeker.current)seeker.current.value=String(playback.currentUs);};
     update();return playback.subscribe(update);
   },[playback,span]);
+  if(document.schemaVersion===3)return <MultitrackTimeline document={document} playback={playback} selected={selected} onSelect={onSelect} onEdit={onEdit} onSplit={onSplit} onDelete={onDelete}/>;
   const ticks=Array.from({length:11},(_,i)=>BigInt(Math.round(span*i/10)));
   return <section className="timeline" aria-label="الخط الزمني"><div className="timeline-toolbar"><div><h2>الخط الزمني</h2><span className="muted">الوقت من اليسار إلى اليمين</span></div><div className="timeline-actions"><button className="button small" onClick={onSplit} disabled={!selected}><Icon name="cut" size={16}/>تقسيم <kbd>S</kbd></button><button className="icon-button" aria-label="حذف المقطع المحدد مع إغلاق الفراغ" onClick={onDelete} disabled={!selected}><Icon name="trash" size={18}/></button><label className="zoom-label">تكبير<input aria-label="تكبير الخط الزمني" type="range" min={1} max={8} step={1} value={zoom} onChange={e=>setZoom(Number(e.target.value))}/></label></div></div>
     <div className="timeline-layout" dir="ltr"><div className="track-headers" dir="rtl"><div className="ruler-space">المسارات</div><div><Icon name="film" size={16}/><span>الفيديو</span><small>V1</small></div><div><Icon name="sound" size={16}/><span>صوت المصدر</span><small>A1</small></div></div>

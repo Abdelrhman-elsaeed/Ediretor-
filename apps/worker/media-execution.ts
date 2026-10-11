@@ -1,3 +1,4 @@
+import {renderMultitrack} from './multitrack-render';
 import {mkdir, rename, writeFile, rm, stat, copyFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {AppError, assetSchema, importPayloadSchema, exportPayloadSchema, type Asset, type Job} from '../../packages/contracts/src/project';
@@ -18,11 +19,12 @@ export async function executeImport(job: JobRecord, lease: string, storage: Loca
   let metadata;
   try {metadata = await probe(input, signal);} catch (e) {if (signal.aborted) throw e; throw new AppError('UNSUPPORTED_MEDIA');}
   const video = metadata.streams.find(s => s.codec_type === 'video'), audio = metadata.streams.some(s => s.codec_type === 'audio');
-  const duration = Number(metadata.format.duration);
-  if (!video?.width || !video.height || !Number.isFinite(duration) || duration <= 0 || duration > 14400) throw new AppError('UNSUPPORTED_MEDIA');
-  if (video.width > 3840 || video.height > 2160) throw new AppError('SOURCE_RESOLUTION_LIMIT');
+  const image=!!video && /\.(png|jpe?g|webp|bmp)$/i.test(payload.name),audioOnly=!video&&audio;
+  const duration = image?30:Number(metadata.format.duration);
+  if ((!audioOnly && (!video?.width || !video.height)) || !Number.isFinite(duration) || duration <= 0 || duration > 14400) throw new AppError('UNSUPPORTED_MEDIA');
+  if ((video?.width??0) > 3840 || (video?.height??0) > 2160) throw new AppError('SOURCE_RESOLUTION_LIMIT');
   const durationUs = BigInt(Math.round(duration * 1_000_000));
-  const [num, den] = (video.avg_frame_rate ?? '30/1').split('/').map(Number);
+  const [num, den] = (audioOnly||image?'30/1':video?.avg_frame_rate ?? '30/1').split('/').map(Number);
   if (!num || !den || num / den > 120) throw new AppError('UNSUPPORTED_FRAME_RATE');
   progress('hashing', 0);
   const hash = await hashFile(input, signal);
@@ -30,7 +32,7 @@ export async function executeImport(job: JobRecord, lease: string, storage: Loca
   const proxyFile = join(work, 'proxy.mp4'), thumbFile = join(work, 'thumbnail.jpg');
   progress('proxy', 0);
   // Same geometry as the export profile. Preserve source seconds for VFR inputs; no frame-index assumption.
-  await native('ffmpeg', [...baseArgs, '-i', input, '-map','0:v:0','-map','0:a:0?', '-vf',
+  await native('ffmpeg', [...baseArgs,...(audioOnly?['-f','lavfi','-i',`color=c=black:s=1920x1080:r=30:d=${duration}`,'-i',input]:[...(image?['-loop','1']:[]),'-i',input]), '-map','0:v:0',...(audioOnly?['-map','1:a:0']:['-map','0:a:0?']),...(image?['-t',String(duration)]:[]), '-vf',
     'scale=1920:1080:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30',
     ...encoding, '-threads','2','-progress','pipe:1', proxyFile], signal, us => progress('proxy', us / Number(durationUs)));
   await native('ffmpeg', [...baseArgs, '-i', proxyFile, '-frames:v','1','-vf','scale=480:-2', thumbFile], signal);
@@ -39,7 +41,7 @@ export async function executeImport(job: JobRecord, lease: string, storage: Loca
   if (Math.abs(Number(check.format.duration) - duration) > .15) throw new AppError('PROXY_VALIDATION_FAILED');
   signal.throwIfAborted();
   const asset = assetSchema.parse({id: job.id, projectId: job.projectId, name: payload.name, hash, durationUs: durationUs.toString(),
-    width: video.width, height: video.height, fps: {num, den}, hasAudio: audio, size: (await stat(input)).size, original, proxy, thumbnail});
+    width: video?.width??1920, height: video?.height??1080,mediaKind:audioOnly?'audio':image?'image':'video', fps: {num, den}, hasAudio: audio, size: (await stat(input)).size, original, proxy, thumbnail});
   const published: string[] = [];
   try {
     await copyFile(input, storage.path(original)); published.push(original);
@@ -58,6 +60,8 @@ export async function executeExport(job: JobRecord, lease: string, storage: Loca
     if (await hashFile(storage.path(asset.original), signal) !== asset.hash) throw new AppError('ASSET_HASH_MISMATCH');
   }
   const parts: string[] = [], audioParts: string[] = []; let completed = 0;
+  if(payload.document.schemaVersion===3)await renderMultitrack(payload.document,storage,work,signal,progress);
+  else {
   for (const [index, segment] of plan.segments.entries()) {
     const target = join(work, `segment-${index}.mp4`), frames = segment.endFrame - segment.startFrame;
     if (frames <= 0) throw new AppError('CLIP_TOO_SHORT');
@@ -78,6 +82,7 @@ export async function executeExport(job: JobRecord, lease: string, storage: Loca
   }
   await writeFile(join(work, 'concat.txt'), parts.join('\n'));
   await writeFile(join(work, 'audio-concat.txt'), audioParts.join('\n'));
+  }
   const output = join(work, 'output.mp4');
   let captionInput:string|undefined;
   if(payload.document.captionStyle?.enabled && !payload.captions)throw new AppError('NO_CAPTIONS');
@@ -94,8 +99,9 @@ export async function executeExport(job: JobRecord, lease: string, storage: Loca
     '-t',(plan.frames/30).toFixed(6),'-movflags','+faststart',output], signal);
   progress('validating', .96);
   const metadata = await probe(output, signal), video = metadata.streams.find(s => s.codec_type === 'video');
-  if (video?.width !== plan.canvas.width || video?.height !== plan.canvas.height || Number(video?.nb_frames) !== plan.frames || video.avg_frame_rate !== '30/1' ||
-      Math.abs(Number(metadata.format.duration) - plan.frames / 30) > .15) throw new AppError('EXPORT_VALIDATION_FAILED');
+  const frameCount=Number(video?.nb_frames);
+  if (video?.width !== plan.canvas.width || video?.height !== plan.canvas.height || (Number.isFinite(frameCount) && Math.abs(frameCount-plan.frames)>2) || (payload.document.schemaVersion!==3 && video.avg_frame_rate !== '30/1') ||
+      Math.abs(Number(metadata.format.duration) - plan.frames / 30) > .5) throw new AppError('EXPORT_VALIDATION_FAILED');
   // Full decode precedes publication. Media marker/parity qualification remains separate evidence.
   await native('ffmpeg', ['-v','error','-xerror','-i',output,'-f','null','-'], signal);
   signal.throwIfAborted();

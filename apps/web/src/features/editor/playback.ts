@@ -1,9 +1,14 @@
+import {MultitrackPlayback} from './multitrack-playback';
 import type {ProjectDocument} from '../../../../../packages/contracts/src/project';
 import {compile} from '../../../../../packages/composition/src/compile';
 
 export class Playback {
   private plan = compile({schemaVersion:1,projectId:'empty',revisionId:'empty',parentRevisionId:null,sequence:{canvas:{width:1920,height:1080},fps:{num:30,den:1},tracks:[{id:'picture',kind:'video'},{id:'sound',kind:'linked-audio'}],clips:[]},assetRefs:[]});
   private signature = '';
+  private multiMode=false;
+  private multi:MultitrackPlayback;
+  constructor(){const owner=this;this.multi=new MultitrackPlayback({get currentUs(){return owner.currentUs;},set currentUs(v){owner.currentUs=v;},get playing(){return owner.playing;},set playing(v){owner.playing=v;},get error(){return owner.error;},set error(v){owner.error=v;},notify:()=>owner.emit()});}
+  attachCanvas(canvas:HTMLCanvasElement){this.multiMode=true;return this.multi.attach(canvas);}
   private video?: HTMLVideoElement;
   private activeIndex = -1;
   private raf = 0;
@@ -13,7 +18,7 @@ export class Playback {
   currentUs = 0n;
   playing = false;
   error = '';
-  get durationUs() {return this.plan.durationUs;}
+  get durationUs() {return this.multiMode?this.multi.durationUs:this.plan.durationUs;}
   subscribe = (listener: () => void) => {this.listeners.add(listener); return ()=>{this.listeners.delete(listener);};};
   private emit() {for (const listener of this.listeners) listener();}
   attach(video: HTMLVideoElement): () => void {
@@ -27,11 +32,14 @@ export class Playback {
     return () => {this.pause();video.removeEventListener('loadedmetadata',loaded);video.removeEventListener('error',failed);video.removeEventListener('ended',ended);video.removeEventListener('seeked',changed);video.removeAttribute('src');video.load();this.video=undefined;};
   }
   update(document: ProjectDocument) {
+    if(document.schemaVersion===3){this.multiMode=true;this.multi.update(document);return;}
+    this.multiMode=false;
     const signature = JSON.stringify([document.sequence,document.assetRefs]);
     if (this.signature === signature) return;
     this.signature=signature; this.pause();this.plan=compile(document);this.activeIndex=-1;this.seek(this.currentUs);
   }
   seek(us: bigint) {
+    if(this.multiMode){this.multi.seek(us);return;}
     this.error='';this.currentUs=us < 0n ? 0n : us > this.durationUs ? this.durationUs : us;
     if (!this.plan.segments.length) {this.activeIndex=-1;this.video?.removeAttribute('src');this.emit();return;}
     const index = this.currentUs === this.durationUs ? this.plan.segments.length-1 : this.plan.segments.findIndex(s=>this.currentUs >= s.sequenceStartUs && this.currentUs < s.sequenceStartUs+s.durationUs);
@@ -53,11 +61,12 @@ export class Playback {
   }
   toggle() {if(this.playing)this.pause();else this.play();}
   play() {
+    if(this.multiMode){void this.multi.play();return;}
     if(!this.plan.segments.length || !this.video)return;
     if(this.currentUs >= this.durationUs)this.seek(0n);
     this.playing=true;void this.safePlay();this.emit();cancelAnimationFrame(this.raf);this.tick();
   }
-  pause() {this.playing=false;++this.generation;this.video?.pause();cancelAnimationFrame(this.raf);this.emit();}
+  pause() {if(this.multiMode){this.multi.pause();this.emit();return;}this.playing=false;++this.generation;this.video?.pause();cancelAnimationFrame(this.raf);this.emit();}
   private next() {
     const next=this.plan.segments[this.activeIndex+1];
     if(next)this.seek(next.sequenceStartUs);else {this.currentUs=this.durationUs;this.pause();}

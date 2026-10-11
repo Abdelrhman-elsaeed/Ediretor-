@@ -97,3 +97,5 @@ CommandEnvelope يحتوي commandId وbaseRevisionId وactor وscope وpayload.
 تلتقط مهمة التصدير ExportSnapshot قبل enqueue، وتتحقق من وجود جميع الأصول/الخطوط. URL التحميل تُحل وقت التنفيذ، لكن المحتوى يُطابق hash. أي اختلاف يُفشل المهمة برسالة واضحة.
 
 نفس revision مع نفس runtime/assets/profile تعطي نفس semantics والإطارات المطلوبة؛ لا نعد بتطابق bytes للملف المضغوط عبر مختلف الأجهزة.
+
+Phase 03 schema 3 extends the local document with roles, variable tracks, sync groups, independent edit links, timed layout events, occurrence transforms and audio envelopes. Old documents/revisions remain readable without rewriting. The [Phase 03 runtime contract](../specs/003-multitrack-sync/runtime-contract.md) defines timing, locks, ripple, drift and compatibility before UI integration.
